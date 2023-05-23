@@ -1,0 +1,86 @@
+---
+title: "Learnr Test"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+
+tutorial_options(exercise.eval = FALSE)
+
+# Define a custom event recorder function.
+event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+  # Create a file connection
+  con <- file("~/CSRI-2023/Learnr Test/logfile.txt", open = "a")
+  
+  # Write the output to the file.
+  writeLines(paste(tutorial_id, tutorial_version, user_id, event, toString(data)), con)
+  
+  # Close the connection
+  close(con)
+}
+
+# Set the global option
+options(tutorial.event_recorder = event_recorder)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Topic 1
+
+### Exercise
+
+```{r multiplechoice}
+
+question(
+  "How long did it take Camden to troubleshoot this when first setting it up?",
+  answer("30 Minutes"),
+  answer("1 Hour", correct = TRUE),
+  answer("1.5 Hours"),
+  answer("2 Hours")
+)
+```
+
+```{r numeric}
+
+question_numeric(
+"What is pi rounded to 2 decimal points?",
+ answer(3, message = "Don't forget to use the decimals argument"),
+ answer(3.1, message = "Too few decimals"),
+ answer(3.142, message = "Too many decimals"),
+ answer(3.14, correct = TRUE),
+ allow_retry = TRUE,
+ min = 3,
+ max = 4,
+ step = 0.01
+)
+```
+
+```{r toltest}
+
+question_numeric(
+  "What is the approximate population of Mount Vernon?",
+  answer(4460, correct = TRUE, message = "As of 2021, the approximate population of Mount Vernon is 4460."),
+  tolerance = 100,
+  step = 10,
+  options = list(
+    placeholder = "Hint: The answer is between 4,000 and 5,000"
+  )
+)
+```
+
+```{r imagetest}
+question(
+  "Which one of these arrows is facing left?",
+  answer(
+    htmltools::img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), correct = TRUE),
+  answer(
+    htmltools::img(src = "https://cdn-icons-png.flaticon.com/512/66/66831.png")),
+  answer(htmltools::img(src = "https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png")),
+  answer(htmltools::img(src = "https://png.pngtree.com/png-vector/20190419/ourmid/pngtree-vector-down-arrow-icon-png-image_956433.jpg")),
+  allow_retry = TRUE,
+  random_answer_order = TRUE
+  
+)
+
+```
