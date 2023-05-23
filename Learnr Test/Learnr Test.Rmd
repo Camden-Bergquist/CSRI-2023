@@ -11,24 +11,23 @@ tutorial_options(exercise.eval = FALSE)
 
 # Define a custom event recorder function.
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
-  # Create a file connection
-  con <- file("~/CSRI-2023/Learnr Test/logfile.txt", open = "a")
-  
-  # Write the output to the file.
-  writeLines(paste(tutorial_id, tutorial_version, user_id, event, toString(data)), con)
-  
-  # Close the connection
-  close(con)
+  if (event %in% c("exercise_submission", "question_submission")) {
+    # Create a file connection
+    con <- file("~/CSRI-2023/Learnr Test/logfile.txt", open = "a")
+    
+    # Write the output to the file.
+    writeLines(paste(tutorial_id, tutorial_version, user_id, event, toString(data)), con)
+    
+    # Close the connection
+    close(con)
+  }
 }
 
 # Set the global option
 options(tutorial.event_recorder = event_recorder)
+
 knitr::opts_chunk$set(echo = FALSE)
 ```
-
-## Topic 1
-
-### Exercise
 
 ```{r multiplechoice}
 
@@ -60,7 +59,7 @@ question_numeric(
 
 question_numeric(
   "What is the approximate population of Mount Vernon?",
-  answer(4460, correct = TRUE, message = "As of 2021, the approximate population of Mount Vernon is 4460."),
+  answer(4460, correct = TRUE, message = "As of 2021, the population of Mount Vernon is 4460."),
   tolerance = 100,
   step = 10,
   options = list(
@@ -82,5 +81,4 @@ question(
   random_answer_order = TRUE
   
 )
-
 ```
