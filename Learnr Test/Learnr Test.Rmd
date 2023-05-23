@@ -7,6 +7,8 @@ runtime: shiny_prerendered
 ```{r setup, include=FALSE}
 library(learnr)
 
+library(learnr)
+
 tutorial_options(exercise.eval = FALSE)
 
 # Define a custom event recorder function.
@@ -16,7 +18,12 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     con <- file("~/CSRI-2023/Learnr Test/logfile.txt", open = "a")
     
     # Write the output to the file.
-    writeLines(paste(tutorial_id, tutorial_version, user_id, event, toString(data)), con)
+    # This is modified to only include the information that you want
+    if(event == "question_submission") {
+      writeLines(paste(data$question, data$answer, ifelse(data$correct, "TRUE", "FALSE"), sep = ", "), con)
+    } else {
+      # handle the case of exercise_submission if you have exercises in your tutorial
+    }
     
     # Close the connection
     close(con)
