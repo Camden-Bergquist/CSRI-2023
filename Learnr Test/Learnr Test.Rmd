@@ -6,27 +6,41 @@ runtime: shiny_prerendered
 
 ```{r setup, include=FALSE}
 library(learnr)
-
-library(learnr)
+library(googlesheets4)
 
 tutorial_options(exercise.eval = FALSE)
+
+# Initialize a data frame.
+df <- data.frame(tutorial_id = character(), 
+                 tutorial_version = character(),
+                 user_id = character(),
+                 event = character(), 
+                 question = character(),
+                 answer = character(), 
+                 correct = logical(),
+                 stringsAsFactors = FALSE) # Set this to avoid factors
 
 # Define a custom event recorder function.
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
   if (event %in% c("exercise_submission", "question_submission")) {
-    # Create a file connection
-    con <- file("~/CSRI-2023/Learnr Test/logfile.txt", open = "a")
+    # Add the new row to the dataframe
+    new_row <- data.frame(tutorial_id = tutorial_id, 
+                          tutorial_version = tutorial_version,
+                          user_id = user_id,
+                          event = event, 
+                          question = data$question,
+                          answer = data$answer, 
+                          correct = ifelse(data$correct, TRUE, FALSE),
+                          stringsAsFactors = FALSE) # Set this to avoid factors
+
+    # Combine the existing data frame with the new row
+    df <<- rbind(df, new_row)
     
-    # Write the output to the file.
-    # This is modified to only include the information that you want
-    if(event == "question_submission") {
-      writeLines(paste(data$question, data$answer, ifelse(data$correct, "TRUE", "FALSE"), sep = ", "), con)
-    } else {
-      # handle the case of exercise_submission if you have exercises in your tutorial
+    # If it's the final question or exercise, write to Google Sheets
+    if(data$question == "Which one of these arrows is facing left?") {
+      ss <- gs4_create(name = "logfile2")
+      sheet_write(df, ss = ss)
     }
-    
-    # Close the connection
-    close(con)
   }
 }
 
@@ -34,6 +48,7 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
 options(tutorial.event_recorder = event_recorder)
 
 knitr::opts_chunk$set(echo = FALSE)
+
 ```
 
 ```{r multiplechoice}
