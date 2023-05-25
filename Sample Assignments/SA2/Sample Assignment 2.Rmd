@@ -1,0 +1,152 @@
+---
+title: "Exploratory data analysis: 3 - Numerical Summaries"
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+---
+
+```{r setup, message = FALSE, warning = FALSE,	include = FALSE}
+
+library(learnr)
+library(googlesheets4)
+library(tidyverse)
+
+tutorial_options(exercise.eval = FALSE)
+
+# Initialize a data frame.
+df <- data.frame(user_id = character(),
+                 question = character(),
+                 answer = character(), 
+                 correct = logical(),
+                 stringsAsFactors = FALSE) # Set this to avoid factors
+
+# Define a custom event recorder function.
+event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+  if (event %in% c("exercise_submission", "question_submission")) {
+    # Add the new row to the dataframe
+    new_row <- data.frame(user_id = user_id,
+                          question = data$question,
+                          answer = data$answer, 
+                          correct = ifelse(data$correct, TRUE, FALSE),
+                          stringsAsFactors = FALSE) # Set this to avoid factors
+
+    # Combine the existing data frame with the new row
+    df <<- rbind(df, new_row)
+    
+    # If it's the final question or exercise, write to Google Sheets
+      if(data$question == "Which one of these arrows is facing left?") {
+      ss <- gs4_create(name = "logfile2")
+      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
+                  sheet = "Sheet1")
+    }
+  }
+}
+
+# Set the global option
+options(tutorial.event_recorder = event_recorder)
+knitr::opts_chunk$set(warning = FALSE,
+                      message = FALSE,
+                      echo = FALSE, 
+                      fig.height = 3,
+                      fig.width = 5,
+                      fig.align = "center")
+
+life <- read_csv("data/life_exp.csv") %>% 
+  mutate(
+    state = str_to_title(state),
+    county = str_to_title(county)
+    )
+```
+
+## Choice of Center
+
+The choice of measure for center can have a dramatic impact on what we consider to be a typical observation, so it is important that you consider the shape of the distribution before deciding on the measure.
+
+```{r mc1-pre}
+set.seed(38)
+rskew <- rexp(1000, 1)
+symm <- rnorm(1000)
+d <- data.frame(x = c(rskew, symm),
+                distribution = rep(c("A", "B"), c(1000, 1000)))
+
+ggplot(d, aes(x = x, fill = distribution)) +
+  geom_density(alpha = 0.3)
+```
+
+```{r mc1}
+question("Which set of measures of central tendency would be *worst* for describing the two distributions shown here?",
+  answer("A: mode, B: median", message = "Not quite, try again."),
+  answer("A: mean, B: mode", correct = TRUE, message = "Nice! Let's continue to the next exercise."),
+  answer("A: median, B: mean", message = "Incorrect, the median and mean look like they'd be good measures of central tendency."),
+  answer("A: median, B: median", message = "Hmm, I think there's a worse choice."),
+  allow_retry = TRUE
+)
+```
+
+
+## Mesure for Spread 
+
+The choice of measure for spread can dramatically impact how variable we consider our data to be, so it is important that you consider the shape of the distribution before deciding on the measure.
+
+```{r mc2-pre}
+rskew <- rexp(1000, 1)
+symm <- rnorm(1000)
+d <- data.frame(x = c(rskew, symm),
+                distribution = rep(c("A", "B"), c(1000, 1000)))
+
+ggplot(d, aes(x = x, fill = distribution)) +
+  geom_density(alpha = 0.3)
+```
+
+
+```{r mc2}
+question("Which set of measures of spread would be *worst* for describing the two distributions shown here?",
+  answer("A: IQR, B: IQR", message = "Given the two distributions, the IQR seems like it'd be okay."),
+  answer("A: SD, B: IQR", message = "Hm, not quite. Try again!"),
+  answer("A: Variance, B: Range", correct = TRUE, message = "Good job!" ), 
+  incorrect = "A has a high peak and its width is large. What does that tell you about its variance?",
+  allow_retry = TRUE
+)
+```
+
+
+## Describe the Shape
+
+To build some familiarity with distributions of different shapes, consider the four that are plotted here. 
+
+```{r mr3-pre}
+set.seed(12)
+x1 <- density(rnorm(30, 0.6, 0.2))
+x2 <- density(rnorm(30, 0.6, 0.2))
+x3 <- density(rexp(30, 1))
+x4 <- density(c(rnorm(15, 1, 0.1), rnorm(15, 1.7, 0.1)))
+y <- c(x1$y, x2$y, x3$y, x4$y)
+x <- c(x1$x, x2$x, x3$x, x4$x)
+
+d <- data.frame(x = x,
+                y = y,
+                group = rep(LETTERS[1:4], each = 512))
+ggplot(d, aes(x = x, y = y)) +
+  geom_line() +
+  facet_wrap(~group, scales = "free") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+```
+
+
+```{r mc3}
+question("Which of the following options does the best job of describing their shape in terms of modality and skew/symmetry?",
+  answer("A: bimodal symmetric; B: unimodal symmetric; C: unimodal left-skewed, D: bimodal right-skewed."),
+  answer("A: unimodal symmetric; B: unimodal right-skewed; C: unimodal right-skewed, D: bimodal symmetric.", correct = TRUE),
+  answer("A: unimodal right-skewed; B: unimodal left-skewed; C: unimodal left-skewed; D: bimodal symmetric."),
+  answer("A: unimodal left-skewed; B: bimodal symmetric; C: unimodal right-skewed, D: unimodal symmetric."),
+  allow_retry = TRUE,
+  incorrect = "A useful mnemonic is the ' skew is where there is few'. That is, a left-skewed distribution has fewer values in its left tail."
+)
+```
