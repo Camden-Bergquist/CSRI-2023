@@ -38,8 +38,8 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     df <<- rbind(df, new_row)
     
     # If it's the final question or exercise, write to Google Sheets
-      if(data$question == "Which one of these arrows is facing left?") {
-      ss <- gs4_create(name = "logfile2")
+      if(data$question == "The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.") {
+      ss <- gs4_create(name = "Assignment 1 Log")
       sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
                   sheet = "Sheet1")
     }

@@ -166,10 +166,7 @@ library(googlesheets4)
 tutorial_options(exercise.eval = FALSE)
 
 # Initialize a data frame.
-df <- data.frame(tutorial_id = character(), 
-                 tutorial_version = character(),
-                 user_id = character(),
-                 event = character(), 
+df <- data.frame(user_id = character(),
                  question = character(),
                  answer = character(), 
                  correct = logical(),
@@ -179,10 +176,7 @@ df <- data.frame(tutorial_id = character(),
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
   if (event %in% c("exercise_submission", "question_submission")) {
     # Add the new row to the dataframe
-    new_row <- data.frame(tutorial_id = tutorial_id, 
-                          tutorial_version = tutorial_version,
-                          user_id = user_id,
-                          event = event, 
+    new_row <- data.frame(user_id = user_id,
                           question = data$question,
                           answer = data$answer, 
                           correct = ifelse(data$correct, TRUE, FALSE),
@@ -192,9 +186,10 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     df <<- rbind(df, new_row)
     
     # If it's the final question or exercise, write to Google Sheets
-    if(data$question == "Which of the following conclusions is not a valid statistical interpretation of these results?") {
+      if(data$question == "Which of the following conclusions is not a valid statistical interpretation of these results?") {
       ss <- gs4_create(name = "Assignment 3 Log")
-      sheet_write(df, ss = ss)
+      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
+                  sheet = "Sheet1")
     }
   }
 }
@@ -239,27 +234,27 @@ session$onSessionEnded(function() {
  
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "mc3", question = structure("Which of the following values is the correct correlation between poverty rate and high school graduation rate?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_42bdc3e", 
+"character")), answers = list(structure(list(id = "lnr_ans_dc159cf", 
     option = "-0.861", value = "-0.861", label = structure("-0.861", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Close, but a correlation of -0.861 seems a bit too strong for the relationship shown on the plot.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_288f51a", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_d56357c", 
     option = "-0.681", value = "-0.681", label = structure("-0.681", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = structure("The relationship is clearly negative, not too strong, and not too weak…", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_51bde21", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_2db4316", 
     option = "-0.186", value = "-0.186", label = structure("-0.186", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Not quite!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_ebb93b", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_4e21f86", 
     option = "0.186", value = "0.186", label = structure("0.186", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Incorrect, the slope is not positive!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_207942f", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_ae6e795", 
     option = "0.681", value = "0.681", label = structure("0.681", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Wrong, the relationship isn’t positive!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a87ba4c", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_c5a155", 
     option = "0.861", value = "0.861", label = structure("0.861", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Try again!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
@@ -270,7 +265,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "mc3-answer", question = "mc3"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1568134813.26978, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1982083821.57702, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
@@ -278,31 +273,31 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "mc4", question = structure("Choose the correct interpretation of this value.", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_cdba1dc", 
+"character")), answers = list(structure(list(id = "lnr_ans_e0051d3", 
     option = "People who graduate from high school are less likely to be poor.", 
     value = "People who graduate from high school are less likely to be poor.", 
     label = structure("People who graduate from high school are less likely to be poor.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Beware the ecological fallacy!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_14465e2", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_7ba11f3", 
     option = "Counties with lower high school graduation rates are likely to have lower poverty rates.", 
     value = "Counties with lower high school graduation rates are likely to have lower poverty rates.", 
     label = structure("Counties with lower high school graduation rates are likely to have lower poverty rates.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Check the sign!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_7ad23b", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_5cb67c9", 
     option = "Counties with lower high school graduation rates are likely to have higher poverty rates.", 
     value = "Counties with lower high school graduation rates are likely to have higher poverty rates.", 
     label = structure("Counties with lower high school graduation rates are likely to have higher poverty rates.", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = structure("Correlation doesn’t imply causation, which rules out a couple of the options!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_9495033", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_f776cc", 
     option = "Because the correlation is negative, there is no relationship between poverty rates and high school graduate rates. ", 
     value = "Because the correlation is negative, there is no relationship between poverty rates and high school graduate rates. ", 
     label = structure("Because the correlation is negative, there is no relationship between poverty rates and high school graduate rates.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Negative correlation is still correlation!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a02ddfc", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_778d6b4", 
     option = "Having a higher percentage of high school graduates in a county results in that county having lower poverty rates.", 
     value = "Having a higher percentage of high school graduates in a county results in that county having lower poverty rates.", 
     label = structure("Having a higher percentage of high school graduates in a county results in that county having lower poverty rates.", html = TRUE, class = c("html", 
@@ -315,32 +310,32 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "mc4-answer", question = "mc4"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 358943474.832854, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1913465776.10897, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "mc5", question = structure("Which of the following conclusions is not a valid statistical interpretation of these results?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_e8418b4", 
+"character")), answers = list(structure(list(id = "lnr_ans_df66ed6", 
     option = "We observed that babies with longer gestational periods tended to be heavier at birth.", 
     value = "We observed that babies with longer gestational periods tended to be heavier at birth.", 
     label = structure("We observed that babies with longer gestational periods tended to be heavier at birth.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("This statement <strong>is<\u002fstrong> a valid interpretation of the results! It uses with ‘tended’ wording carefully to prevent a causal implication.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e6dba1b", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_b3f328f", 
     option = "It may be that a longer gestational period contributes to a heavier birth weight among babies, but a randomized, controlled experiment is needed to confirm this observation.", 
     value = "It may be that a longer gestational period contributes to a heavier birth weight among babies, but a randomized, controlled experiment is needed to confirm this observation.", 
     label = structure("It may be that a longer gestational period contributes to a heavier birth weight among babies, but a randomized, controlled experiment is needed to confirm this observation.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("This statement <strong>is<\u002fstrong> a valid interpretation of the results! It uses a cautionary language and refers explicitly to a randomized experiment to avoid that correlation also implies causation.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_5c0fe18", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_c0a2ba6", 
     option = "Staying in the womb longer causes babies to be heavier when they are born.", 
     value = "Staying in the womb longer causes babies to be heavier when they are born.", 
     label = structure("Staying in the womb longer causes babies to be heavier when they are born.", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = structure("Correlation does not imply causation! This is the only <strong>wrong interpretation<\u002fstrong>. All the other interpretations choose words carefully (‘tend’, ‘experiment needed’, ‘beware of confounding factors’, etc.) to prevent a causal implication.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_3f4b777", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e110a5", 
     option = "These data suggest that babies with longer gestational periods tend to be heavier at birth, but there are many potential confounding factors that were not taken into account.", 
     value = "These data suggest that babies with longer gestational periods tend to be heavier at birth, but there are many potential confounding factors that were not taken into account.", 
     label = structure("These data suggest that babies with longer gestational periods tend to be heavier at birth, but there are many potential confounding factors that were not taken into account.", html = TRUE, class = c("html", 
@@ -353,7 +348,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "mc5-answer", question = "mc5"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 748161722.65161, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1528435401.28827, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
