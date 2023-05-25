@@ -11,10 +11,7 @@ library(googlesheets4)
 tutorial_options(exercise.eval = FALSE)
 
 # Initialize a data frame.
-df <- data.frame(tutorial_id = character(), 
-                 tutorial_version = character(),
-                 user_id = character(),
-                 event = character(), 
+df <- data.frame(user_id = character(),
                  question = character(),
                  answer = character(), 
                  correct = logical(),
@@ -24,10 +21,7 @@ df <- data.frame(tutorial_id = character(),
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
   if (event %in% c("exercise_submission", "question_submission")) {
     # Add the new row to the dataframe
-    new_row <- data.frame(tutorial_id = tutorial_id, 
-                          tutorial_version = tutorial_version,
-                          user_id = user_id,
-                          event = event, 
+    new_row <- data.frame(user_id = user_id,
                           question = data$question,
                           answer = data$answer, 
                           correct = ifelse(data$correct, TRUE, FALSE),
@@ -37,11 +31,14 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     df <<- rbind(df, new_row)
     
     # If it's the final question or exercise, write to Google Sheets
-    if(data$question == "Which one of these arrows is facing left?") {
+      if(data$question == "Which one of these arrows is facing left?") {
       ss <- gs4_create(name = "logfile2")
-      sheet_write(df, ss = ss)
+      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
+                  sheet = "Sheet1")
     }
+
   }
+  
 }
 
 # Set the global option
