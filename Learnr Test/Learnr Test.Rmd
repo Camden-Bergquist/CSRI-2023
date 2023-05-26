@@ -20,12 +20,11 @@ df <- data.frame(user_id = character(),
                  correct = logical(),
                  stringsAsFactors = FALSE) # Set this to avoid factors
 
-# Define a custom event recorder function.
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
   if (event %in% c("exercise_submission", "question_submission")) {
     # Add the new row to the dataframe
     new_row <- data.frame(user_id = user_id,
-                          question = data$question,
+                          problem = data$question, # Changed to 'problem'
                           answer = data$answer, 
                           correct = ifelse(data$correct, TRUE, FALSE),
                           stringsAsFactors = FALSE) # Set this to avoid factors
@@ -35,18 +34,33 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
 
     # If it's the final question or exercise, reshape and write to Google Sheets
     if(data$question == "Which one of these arrows is facing left?") {
-      df_wide <- df %>% 
+      
+      df <- df %>% 
         group_by(user_id) %>% 
-        mutate(question_num = row_number()) %>%
-        pivot_wider(names_from = question_num, 
-                    values_from = c(question, answer, correct),
-                    names_sep = "_")
+        mutate(question_num = paste0("Q", row_number()))  %>%
+        ungroup()
+      
+      df_long <- df %>% 
+        gather(key = "key", value = "value", -user_id, -question_num) %>%
+        unite("key", question_num, key, sep = "_")
 
-      ss <- gs4_create(name = "logfile2")
+      df_wide <- df_long %>% 
+        pivot_wider(names_from = key, values_from = value)
+
+      # Generate column order dynamically
+      num_questions <- max(as.numeric(gsub("Q", "", unique(df$question_num))))
+      col_order <- c("user_id", unlist(lapply(1:num_questions, function(i) paste0("Q", i, c("_problem", "_answer", "_correct")))))
+
+      # Subset df_wide with the generated column order
+      df_wide <- df_wide[, col_order]
+
+      ss <- gs4_create(name = "logfile")
       sheet_write(df_wide, ss = ss, sheet = "Sheet1")
     }
   }
 }
+
+
 
 # Set the global option
 options(tutorial.event_recorder = event_recorder)
