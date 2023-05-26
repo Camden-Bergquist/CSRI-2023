@@ -8,36 +8,58 @@ output: html_document
 ```{r setup, include=FALSE}
 
 library(tidyverse)
+library(knitr)
 
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r Load}
 # Assign data to variable
-data <- read.csv('./data/SampleData.csv')
+data <- read.csv('./data/SampleData2.csv')
+
+# Separate columns into problems, answers and correctness
+problems <- data %>%
+  select(user_id, starts_with("Q") & ends_with("problem")) %>%
+  pivot_longer(-user_id, names_to = "question", values_to = "problem", names_pattern = "(Q\\d+)_problem")
+
+answers <- data %>%
+  select(user_id, starts_with("Q") & ends_with("answer")) %>%
+  pivot_longer(-user_id, names_to = "question", values_to = "answer", names_pattern = "(Q\\d+)_answer")
+
+correctness <- data %>%
+  select(user_id, starts_with("Q") & ends_with("correct")) %>%
+  pivot_longer(-user_id, names_to = "question", values_to = "correct", names_pattern = "(Q\\d+)_correct")
+
+# Combine reshaped data
+data_long <- full_join(problems, answers, by = c("user_id", "question")) %>%
+  full_join(correctness, by = c("user_id", "question"))
 
 # Convert correct column to logical
-data$correct <- as.logical(data$correct)
+data_long$correct <- as.logical(data_long$correct)
 
 # Check the data
-data
+data_long
 ```
 
-``` {r Analysis}
+``` {r Table}
+kable(data)
+```
+
+``` {r Aggregation}
 # Aggregate data by user_id and correct
-user_data <- data %>%
+user_data <- data_long %>%
   group_by(user_id, correct) %>%
   summarise(n = n(), .groups = 'drop')
 
 # Aggregate data by question and correct
-question_data <- data %>%
+question_data <- data_long %>%
   group_by(question, correct) %>%
   summarise(n = n(), .groups = 'drop')
 ```
 
 ## Submissions by User:
 
-``` {r Visualization 1}
+``` {r User Visual}
 # Bar plot of submissions by user, colored by whether they are correct or not
 ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
   geom_bar(stat = 'identity', position = 'dodge') +
@@ -48,7 +70,7 @@ ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
 
 ## Submissions by Question:
 
-``` {r Visualization 2}
+``` {r Question Visual}
 # Bar plot of submissions by question, colored by whether they are correct or not
 ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
   geom_bar(stat = 'identity', position = 'fill') +
@@ -56,5 +78,4 @@ ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
   labs(x = "Question", y = "Ratio", fill = "Correctness") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
 ```
