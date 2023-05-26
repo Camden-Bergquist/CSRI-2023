@@ -1,0 +1,60 @@
+---
+title: "Analysis Script"
+author: "Camden"
+date: "2023-05-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r Load}
+# Assign data to variable
+data <- read.csv('./data/SampleData.csv')
+
+# Convert correct column to logical
+data$correct <- as.logical(data$correct)
+
+# Check the data
+data
+```
+
+``` {r Analysis}
+# Aggregate data by user_id and correct
+user_data <- data %>%
+  group_by(user_id, correct) %>%
+  summarise(n = n(), .groups = 'drop')
+
+# Aggregate data by question and correct
+question_data <- data %>%
+  group_by(question, correct) %>%
+  summarise(n = n(), .groups = 'drop')
+```
+
+## Submissions by User:
+
+``` {r Visualization 1}
+# Bar plot of submissions by user, colored by whether they are correct or not
+ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(x = "User ID", y = "Number of Submissions", fill = "Correctness") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Submissions by Question:
+
+``` {r Visualization 2}
+# Bar plot of submissions by question, colored by whether they are correct or not
+ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
+  geom_bar(stat = 'identity', position = 'fill') +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Question", y = "Ratio", fill = "Correctness") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
