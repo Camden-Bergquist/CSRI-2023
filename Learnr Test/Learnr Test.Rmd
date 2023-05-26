@@ -6,6 +6,9 @@ runtime: shiny_prerendered
 
 ```{r setup, include=FALSE}
 library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
 library(googlesheets4)
 
 tutorial_options(exercise.eval = FALSE)
@@ -29,16 +32,20 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
 
     # Combine the existing data frame with the new row
     df <<- rbind(df, new_row)
-    
-    # If it's the final question or exercise, write to Google Sheets
-      if(data$question == "Which one of these arrows is facing left?") {
-      ss <- gs4_create(name = "logfile2")
-      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
-                  sheet = "Sheet1")
-    }
 
+    # If it's the final question or exercise, reshape and write to Google Sheets
+    if(data$question == "Which one of these arrows is facing left?") {
+      df_wide <- df %>% 
+        group_by(user_id) %>% 
+        mutate(question_num = row_number()) %>%
+        pivot_wider(names_from = question_num, 
+                    values_from = c(question, answer, correct),
+                    names_sep = "_")
+
+      ss <- gs4_create(name = "logfile2")
+      sheet_write(df_wide, ss = ss, sheet = "Sheet1")
+    }
   }
-  
 }
 
 # Set the global option

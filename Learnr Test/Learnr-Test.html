@@ -144,6 +144,9 @@ if (window.hljs) {
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
 library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
 library(googlesheets4)
 
 tutorial_options(exercise.eval = FALSE)
@@ -167,16 +170,37 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
 
     # Combine the existing data frame with the new row
     df <<- rbind(df, new_row)
-    
-    # If it's the final question or exercise, write to Google Sheets
-      if(data$question == "Which one of these arrows is facing left?") {
-      ss <- gs4_create(name = "logfile2")
-      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
-                  sheet = "Sheet1")
-}
 
+    # If it's the final question or exercise, reshape and write to Google Sheets
+    if(data$question == "Which one of these arrows is facing left?") {
+      df_wide <- df %>% 
+        group_by(user_id) %>% 
+        mutate(question_num = row_number()) %>%
+        pivot_wider(names_from = question_num, 
+                    values_from = c(question, answer, correct),
+                    names_sep = "_")
+
+      # Determine the maximum number of questions answered by any user
+      max_questions <- max(df_wide %>% summarise(n = n()) %>% pull(n))
+
+      # Create a vector with the desired order of the columns
+      cols_order <- flatten(map(1:max_questions, 
+                               ~c(paste0("question_", .x),
+                                 paste0("answer_", .x),
+                                 paste0("correct_", .x))))
+
+      # Ensure that cols_order only contains column names that exist in df_wide
+      cols_order <- intersect(cols_order, colnames(df_wide))
+
+      # Reorder the columns
+      df_wide <- df_wide[, c("user_id", cols_order)]
+
+      ss <- gs4_create(name = "logfile2")
+      sheet_write(df_wide, ss = ss, sheet = "Sheet1")
+    }
   }
 }
+
 
 # Set the global option
 options(tutorial.event_recorder = event_recorder)
@@ -208,16 +232,16 @@ session$onSessionEnded(function() {
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "multiplechoice", 
     question = structure("How long did it take Camden to troubleshoot this when first setting it up?", html = TRUE, class = c("html", 
-    "character")), answers = list(structure(list(id = "lnr_ans_aef0896", 
+    "character")), answers = list(structure(list(id = "lnr_ans_6e185f4", 
         option = "30 Minutes", value = "30 Minutes", label = structure("30 Minutes", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_22507ef", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_258e889", 
         option = "1 Hour", value = "1 Hour", label = structure("1 Hour", html = TRUE, class = c("html", 
         "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_d1b4f2", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_4bb8d18", 
         option = "1.5 Hours", value = "1.5 Hours", label = structure("1.5 Hours", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_11168f6", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_a0f5ff0", 
         option = "2 Hours", value = "2 Hours", label = structure("2 Hours", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
     "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
@@ -228,26 +252,26 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
     "character")), message = NULL, post_message = NULL), ids = list(
         answer = "multiplechoice-answer", question = "multiplechoice"), 
     loading = NULL, random_answer_order = FALSE, allow_retry = FALSE, 
-    seed = 1193309168.44432, options = list()), class = c("learnr_radio", 
+    seed = 1683239226.71618, options = list()), class = c("learnr_radio", 
 "tutorial_question")), session = session)
 </script>
 
 
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", label = "numeric", question = structure("What is pi rounded to 2 decimal points?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_f09cf0e", 
+"character")), answers = list(structure(list(id = "lnr_ans_99fb951", 
     option = "3", value = 3, label = structure("3", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Don’t forget to use the decimals argument", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_91dc8ca", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_6caabbd", 
     option = "3.1", value = 3.1, label = structure("3.1", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Too few decimals", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a986610", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_cd0bc6e", 
     option = "3.142", value = 3.142, label = structure("3.142", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Too many decimals", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_f5d4def", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e8f4c38", 
     option = "3.14", value = 3.14, label = structure("3.14", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
@@ -257,14 +281,14 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", labe
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "numeric-answer", question = "numeric"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 952145282.056623, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1548586079.27888, 
     options = list(min = 3, max = 4, step = 0.01, tolerance = 1.5e-08)), class = c("learnr_numeric", 
 "tutorial_question")), session = session)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", label = "toltest", question = structure("What is the approximate population of Mount Vernon?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_b1f6e3", 
+"character")), answers = list(structure(list(id = "lnr_ans_d56fc98", 
     option = "4460", value = 4460, label = structure("4460", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = structure("As of 2021, the population of Mount Vernon is 4460.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
@@ -275,7 +299,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", labe
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "toltest-answer", question = "toltest"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = FALSE, seed = 721468681.66404, 
+    random_answer_order = FALSE, allow_retry = FALSE, seed = 372019877.826765, 
     options = list(placeholder = "Hint: The answer is between 4,000 and 5,000", 
         min = NA, max = NA, step = 10, tolerance = 100)), class = c("learnr_numeric", 
 "tutorial_question")), session = session)
@@ -284,28 +308,28 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", labe
 
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "imagetest", question = structure("Which one of these arrows is facing left?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_f07b248", 
+"character")), answers = list(structure(list(id = "lnr_ans_17c050b", 
     option = "<img src=\"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png\"/>", 
     value = structure(list(name = "img", attribs = list(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), 
         children = list()), class = "shiny.tag"), label = structure(list(
         name = "img", attribs = list(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), 
         children = list()), class = "shiny.tag"), correct = TRUE, 
     message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_1db0794", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_4d2d1bc", 
     option = "<img src=\"https://cdn-icons-png.flaticon.com/512/66/66831.png\"/>", 
     value = structure(list(name = "img", attribs = list(src = "https://cdn-icons-png.flaticon.com/512/66/66831.png"), 
         children = list()), class = "shiny.tag"), label = structure(list(
         name = "img", attribs = list(src = "https://cdn-icons-png.flaticon.com/512/66/66831.png"), 
         children = list()), class = "shiny.tag"), correct = FALSE, 
     message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_fec4867", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_2e87ad4", 
     option = "<img src=\"https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png\"/>", 
     value = structure(list(name = "img", attribs = list(src = "https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png"), 
         children = list()), class = "shiny.tag"), label = structure(list(
         name = "img", attribs = list(src = "https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png"), 
         children = list()), class = "shiny.tag"), correct = FALSE, 
     message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e5ee7dd", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_23ac1a1", 
     option = "<img src=\"https://png.pngtree.com/png-vector/20190419/ourmid/pngtree-vector-down-arrow-icon-png-image_956433.jpg\"/>", 
     value = structure(list(name = "img", attribs = list(src = "https://png.pngtree.com/png-vector/20190419/ourmid/pngtree-vector-down-arrow-icon-png-image_956433.jpg"), 
         children = list()), class = "shiny.tag"), label = structure(list(
@@ -319,7 +343,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "imagetest-answer", question = "imagetest"), loading = NULL, 
-    random_answer_order = TRUE, allow_retry = TRUE, seed = 940790314.06191, 
+    random_answer_order = TRUE, allow_retry = TRUE, seed = 585689932.227267, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
@@ -331,7 +355,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 <!--/html_preserve-->
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="execution_dependencies">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62]}},"value":[{"type":"character","attributes":{},"value":["backports","base","bslib","cachem","cellranger","checkmate","cli","commonmark","compiler","curl","datasets","digest","dplyr","ellipsis","evaluate","fansi","fastmap","fontawesome","fs","gargle","generics","glue","googledrive","googlesheets4","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","learnr","lifecycle","magrittr","markdown","methods","mime","pillar","pkgconfig","promises","purrr","R6","Rcpp","rlang","rmarkdown","rprojroot","rstudioapi","sass","shiny","stats","tibble","tidyselect","tools","utf8","utils","vctrs","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.4.1","4.2.2","0.4.2","1.0.8","1.1.0","2.2.0","3.6.1","1.9.0","4.2.2","5.0.0","4.2.2","0.6.31","1.1.2","0.3.2","0.21","1.0.4","1.1.1","0.5.1","1.6.2","1.4.0","0.1.3","1.6.2","2.1.0","1.1.0","4.2.2","4.2.2","0.5.5","1.6.2","1.6.11","0.1.4","1.8.4","1.42","1.3.1","0.11.3","1.0.3","2.0.3","1.7","4.2.2","0.12","1.9.0","2.0.3","1.2.0.1","1.0.1","2.5.1","1.0.10","1.1.1","2.21","2.0.3","0.14","0.4.6","1.7.4","4.2.2","3.2.1","1.2.0","4.2.2","1.2.3","4.2.2","0.6.2","2.5.0","0.39","1.8-4","2.3.7"]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63]}},"value":[{"type":"character","attributes":{},"value":["backports","base","bslib","cachem","cellranger","checkmate","cli","commonmark","compiler","curl","datasets","digest","dplyr","ellipsis","evaluate","fansi","fastmap","fontawesome","fs","gargle","generics","glue","googledrive","googlesheets4","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","learnr","lifecycle","magrittr","markdown","methods","mime","pillar","pkgconfig","promises","purrr","R6","Rcpp","rlang","rmarkdown","rprojroot","rstudioapi","sass","shiny","stats","tibble","tidyr","tidyselect","tools","utf8","utils","vctrs","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.4.1","4.2.2","0.4.2","1.0.8","1.1.0","2.2.0","3.6.1","1.9.0","4.2.2","5.0.0","4.2.2","0.6.31","1.1.2","0.3.2","0.21","1.0.4","1.1.1","0.5.1","1.6.2","1.4.0","0.1.3","1.6.2","2.1.0","1.1.0","4.2.2","4.2.2","0.5.5","1.6.2","1.6.11","0.1.4","1.8.4","1.42","1.3.1","0.11.3","1.0.3","2.0.3","1.7","4.2.2","0.12","1.9.0","2.0.3","1.2.0.1","1.0.1","2.5.1","1.0.10","1.1.1","2.21","2.0.3","0.14","0.4.6","1.7.4","4.2.2","3.2.1","1.3.0","1.2.0","4.2.2","1.2.3","4.2.2","0.6.2","2.5.0","0.39","1.8-4","2.3.7"]}]}]}
 </script>
 <!--/html_preserve-->
 
