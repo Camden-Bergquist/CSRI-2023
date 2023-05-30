@@ -5,66 +5,86 @@ runtime: shiny_prerendered
 ---
 
 ```{r setup, include=FALSE}
+
+# Import required libraries
 library(learnr)
 library(dplyr)
 library(tidyr)
 library(purrr)
 library(googlesheets4)
 
+# Set tutorial options
 tutorial_options(exercise.eval = FALSE)
 
-# Initialize a data frame.
-df <- data.frame(user_id = character(),
-                 question = character(),
-                 answer = character(), 
-                 correct = logical(),
-                 stringsAsFactors = FALSE) # Set this to avoid factors
+# Initialize an empty data frame
+df <- data.frame(
+  user_id = character(),
+  question = character(),
+  points = integer(),
+  answer = character(), 
+  correct = logical(),
+  stringsAsFactors = FALSE  # Prevent strings being converted to factors
+)
 
+# Function to record tutorial events
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+  
+  # Check if event is exercise_submission or question_submission
   if (event %in% c("exercise_submission", "question_submission")) {
-    # Add the new row to the dataframe
-    new_row <- data.frame(user_id = user_id,
-                          problem = data$question, # Changed to 'problem'
-                          answer = data$answer, 
-                          correct = ifelse(data$correct, TRUE, FALSE),
-                          stringsAsFactors = FALSE) # Set this to avoid factors
+    
+    # Extract points from the question
+    points <- ifelse(grepl("\\[Points: \\d+\\]", data$question), 
+                     as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
+    
+    # Create new row with event data
+    new_row <- data.frame(
+      user_id = user_id,
+      problem = data$question,
+      points = points,
+      answer = data$answer, 
+      correct = ifelse(data$correct, TRUE, FALSE),
+      stringsAsFactors = FALSE  # Prevent strings being converted to factors
+    )
 
-    # Combine the existing data frame with the new row
+    # Append new row to global data frame
     df <<- rbind(df, new_row)
 
-    # If it's the final question or exercise, reshape and write to Google Sheets
-    if(data$question == "Which one of these arrows is facing left?") {
+    # If it's the final question, reshape and write data frame to Google Sheets
+    if(data$question == "Submit Assignment?") {
       
+      # Add a new column for question number
       df <- df %>% 
         group_by(user_id) %>% 
         mutate(question_num = paste0("Q", row_number()))  %>%
         ungroup()
       
+      # Reshape data frame to long format
       df_long <- df %>% 
         gather(key = "key", value = "value", -user_id, -question_num) %>%
         unite("key", question_num, key, sep = "_")
 
+      # Pivot the data frame back to wide format
       df_wide <- df_long %>% 
         pivot_wider(names_from = key, values_from = value)
 
-      # Generate column order dynamically
+      # Generate the column order
       num_questions <- max(as.numeric(gsub("Q", "", unique(df$question_num))))
-      col_order <- c("user_id", unlist(lapply(1:num_questions, function(i) paste0("Q", i, c("_problem", "_answer", "_correct")))))
+      col_order <- c("user_id", unlist(lapply(1:num_questions, function(i) paste0("Q", i, c("_problem", "_points", "_answer", "_correct")))))
 
-      # Subset df_wide with the generated column order
+      # Reorder the columns
       df_wide <- df_wide[, col_order]
 
+      # Create a new Google Sheet and write the data frame to it
       ss <- gs4_create(name = "logfile")
       sheet_write(df_wide, ss = ss, sheet = "Sheet1")
     }
   }
 }
 
-
-
-# Set the global option
+# Set the global option to use our event recorder function
 options(tutorial.event_recorder = event_recorder)
 
+# Set knitr options
 knitr::opts_chunk$set(echo = FALSE)
 
 ```
@@ -72,7 +92,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r multiplechoice}
 
 question(
-  "How long did it take Camden to troubleshoot this when first setting it up?",
+  "[Points: 1] How long did it take Camden to troubleshoot this when first setting it up?",
   answer("30 Minutes"),
   answer("1 Hour", correct = TRUE),
   answer("1.5 Hours"),
@@ -83,7 +103,7 @@ question(
 ```{r numeric}
 
 question_numeric(
-"What is pi rounded to 2 decimal points?",
+"[Points: 2] What is pi rounded to 2 decimal points?",
  answer(3, message = "Don't forget to use the decimals argument"),
  answer(3.1, message = "Too few decimals"),
  answer(3.142, message = "Too many decimals"),
@@ -98,7 +118,7 @@ question_numeric(
 ```{r toltest}
 
 question_numeric(
-  "What is the approximate population of Mount Vernon?",
+  "[Points: 5] What is the approximate population of Mount Vernon?",
   answer(4460, correct = TRUE, message = "As of 2021, the population of Mount Vernon is 4460."),
   tolerance = 100,
   step = 10,
@@ -110,7 +130,7 @@ question_numeric(
 
 ```{r imagetest}
 question(
-  "Which one of these arrows is facing left?",
+  "[Points: 1] Which one of these arrows is facing left?",
   answer(
     htmltools::img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), correct = TRUE),
   answer(
@@ -121,4 +141,10 @@ question(
   random_answer_order = TRUE
   
 )
+```
+
+```{r submission}
+question("Submit Assignment?",
+         answer("Yes", correct = TRUE)
+         )
 ```
