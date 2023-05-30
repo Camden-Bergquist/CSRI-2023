@@ -40,10 +40,13 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     points <- ifelse(grepl("\\[Points: \\d+\\]", data$question), 
                      as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
     
+    # Extract problem without [Question X] and [Points: X]
+    problem <- gsub("\\[Question \\d+\\]|\\[Points: \\d+\\]", "", data$question)
+    
     # Create new row with event data
     new_row <- data.frame(
       user_id = user_id,
-      problem = data$question,
+      problem = problem,  # use the new problem variable here
       points = points,
       answer = data$answer, 
       correct = ifelse(data$correct, TRUE, FALSE),
@@ -87,9 +90,6 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     }
   }
 }
-
-
-
 
 
 # Set the global option to use our event recorder function
