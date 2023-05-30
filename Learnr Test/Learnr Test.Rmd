@@ -32,6 +32,10 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
   # Check if event is exercise_submission or question_submission
   if (event %in% c("exercise_submission", "question_submission")) {
     
+    # Extract question number from the question
+    question_num <- ifelse(grepl("\\[Question \\d+\\]", data$question), 
+                           gsub(".*\\[Question (\\d+)\\].*", "\\1", data$question), NA)
+    
     # Extract points from the question
     points <- ifelse(grepl("\\[Points: \\d+\\]", data$question), 
                      as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
@@ -43,6 +47,7 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
       points = points,
       answer = data$answer, 
       correct = ifelse(data$correct, TRUE, FALSE),
+      question_num = paste0("Q", question_num),  # Add "Q" before the question number
       stringsAsFactors = FALSE  # Prevent strings being converted to factors
     )
 
@@ -50,27 +55,29 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     df <<- rbind(df, new_row)
 
     # If it's the final question, reshape and write data frame to Google Sheets
-    if(data$question == "Submit Assignment?") {
-      
-      # Add a new column for question number
-      df <- df %>% 
-        group_by(user_id) %>% 
-        mutate(question_num = paste0("Q", row_number()))  %>%
-        ungroup()
+    if(data$question == "[Question 5] Submit Assignment?") {
       
       # Reshape data frame to long format
       df_long <- df %>% 
-        gather(key = "key", value = "value", -user_id, -question_num) %>%
-        unite("key", question_num, key, sep = "_")
-
+        gather(key = "key", value = "value", -user_id, -question_num)
+        
+      print("df_long after gather:")
+      print(df_long)
+      
       # Pivot the data frame back to wide format
       df_wide <- df_long %>% 
-        pivot_wider(names_from = key, values_from = value)
+        pivot_wider(names_from = c("question_num", "key"), names_sep = "_", values_from = "value")
 
+      print("df_wide after pivot_wider:")
+      print(df_wide)
+      
       # Generate the column order
-      num_questions <- max(as.numeric(gsub("Q", "", unique(df$question_num))))
-      col_order <- c("user_id", unlist(lapply(1:num_questions, function(i) paste0("Q", i, c("_problem", "_points", "_answer", "_correct")))))
+      unique_questions <- sort(unique(df$question_num))
+      col_order <- c("user_id", unlist(lapply(unique_questions, function(i) paste0(i, c("_problem", "_points", "_answer", "_correct")))))
 
+      print("col_order:")
+      print(col_order)
+      
       # Reorder the columns
       df_wide <- df_wide[, col_order]
 
@@ -80,6 +87,10 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     }
   }
 }
+
+
+
+
 
 # Set the global option to use our event recorder function
 options(tutorial.event_recorder = event_recorder)
@@ -92,7 +103,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r multiplechoice}
 
 question(
-  "[Points: 1] How long did it take Camden to troubleshoot this when first setting it up?",
+  "[Question 1] [Points: 1] How long did it take Camden to troubleshoot this when first setting it up?",
   answer("30 Minutes"),
   answer("1 Hour", correct = TRUE),
   answer("1.5 Hours"),
@@ -103,7 +114,7 @@ question(
 ```{r numeric}
 
 question_numeric(
-"[Points: 2] What is pi rounded to 2 decimal points?",
+"[Question 2] [Points: 2] What is pi rounded to 2 decimal points?",
  answer(3, message = "Don't forget to use the decimals argument"),
  answer(3.1, message = "Too few decimals"),
  answer(3.142, message = "Too many decimals"),
@@ -118,7 +129,7 @@ question_numeric(
 ```{r toltest}
 
 question_numeric(
-  "[Points: 5] What is the approximate population of Mount Vernon?",
+  "[Question 3] [Points: 5] What is the approximate population of Mount Vernon?",
   answer(4460, correct = TRUE, message = "As of 2021, the population of Mount Vernon is 4460."),
   tolerance = 100,
   step = 10,
@@ -130,7 +141,7 @@ question_numeric(
 
 ```{r imagetest}
 question(
-  "[Points: 1] Which one of these arrows is facing left?",
+  "[Question 4] [Points: 1] Which one of these arrows is facing left?",
   answer(
     htmltools::img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), correct = TRUE),
   answer(
@@ -144,7 +155,7 @@ question(
 ```
 
 ```{r submission}
-question("Submit Assignment?",
+question("[Question 5] Submit Assignment?",
          answer("Yes", correct = TRUE)
          )
 ```
