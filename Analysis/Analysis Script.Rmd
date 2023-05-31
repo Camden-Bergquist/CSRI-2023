@@ -14,35 +14,42 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r Load}
-# Assign data to variable
-data <- read.csv('./data/SampleData2.csv')
+# Load data from a local CSV file
+data <- read.csv('./data/TestData2.csv')
 
-# Separate columns into problems, answers and correctness
+# Separate columns into problems, answers, correctness and points
 problems <- data %>%
-  select(user_id, starts_with("Q") & ends_with("problem")) %>%
+  select(user_id, starts_with("Q") & ends_with("_problem")) %>%
   pivot_longer(-user_id, names_to = "question", values_to = "problem", names_pattern = "(Q\\d+)_problem")
 
 answers <- data %>%
-  select(user_id, starts_with("Q") & ends_with("answer")) %>%
+  select(user_id, starts_with("Q") & ends_with("_answer")) %>%
   pivot_longer(-user_id, names_to = "question", values_to = "answer", names_pattern = "(Q\\d+)_answer")
 
 correctness <- data %>%
-  select(user_id, starts_with("Q") & ends_with("correct")) %>%
+  select(user_id, starts_with("Q") & ends_with("_correct")) %>%
   pivot_longer(-user_id, names_to = "question", values_to = "correct", names_pattern = "(Q\\d+)_correct")
+
+points <- data %>%
+  select(user_id, starts_with("Q") & ends_with("_points")) %>%
+  pivot_longer(-user_id, names_to = "question", values_to = "points", names_pattern = "(Q\\d+)_points")
 
 # Combine reshaped data
 data_long <- full_join(problems, answers, by = c("user_id", "question")) %>%
-  full_join(correctness, by = c("user_id", "question"))
+  full_join(correctness, by = c("user_id", "question")) %>%
+  full_join(points, by = c("user_id", "question"))
 
-# Convert correct column to logical
+# Convert correct column to logical and points to integer
 data_long$correct <- as.logical(data_long$correct)
+data_long$points <- as.integer(data_long$points)
 
 # Check the data
 data_long
+
 ```
 
-``` {r Table}
-kable(data)
+``` {r Table, include = FALSE}
+kable(data_long)
 ```
 
 ``` {r Aggregation}
@@ -78,4 +85,55 @@ ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
   labs(x = "Question", y = "Ratio", fill = "Correctness") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+``` {r Incorrect Table}
+# Calculate the number of correct answers per question
+incorrect_answers <- question_data %>%
+  filter(correct == FALSE)
+
+# Sort questions by the number of correct answers
+sorted_questions <- incorrect_answers %>%
+  arrange(desc(n))
+
+# Display in a kable table
+knitr::kable(sorted_questions, caption = "Questions Sorted by Number of Correct Answers")
+```
+
+```{r Grade Calculation}
+
+# Calculate total points earned by each student
+total_points_earned <- data_long %>%
+  filter(correct == TRUE) %>%
+  group_by(user_id) %>%
+  summarise(total_earned = sum(points, na.rm = TRUE))
+
+# Calculate total possible points for the test
+total_points_possible <- data_long %>%
+  group_by(user_id) %>%
+  summarise(total_possible = sum(points, na.rm = TRUE))
+
+# Join total_points_earned and total_points_possible
+grading <- full_join(total_points_earned, total_points_possible, by = "user_id")
+
+# Calculate percentage of points earned
+grading <- grading %>%
+  mutate(percentage = (total_earned / total_possible) * 100)
+
+# Assign letter grade
+grading <- grading %>%
+  mutate(letter_grade = case_when(
+    percentage >= 90 ~ "A",
+    percentage >= 80 ~ "B",
+    percentage >= 70 ~ "C",
+    percentage >= 60 ~ "D",
+    TRUE ~ "F"
+  ))
+
+# Sort by percentage, highest to lowest
+grading <- grading %>%
+  arrange(desc(percentage))
+
+kable(grading)
+
 ```
