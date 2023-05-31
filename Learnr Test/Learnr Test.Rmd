@@ -54,32 +54,25 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
       stringsAsFactors = FALSE  # Prevent strings being converted to factors
     )
 
-    # Append new row to global data frame
-    df <<- rbind(df, new_row)
+    # Append new row to global data frame only if the data's question is not "Submit Assignment?"
+    if(data$question != "Submit Assignment?") {
+      df <<- rbind(df, new_row)
+    }
 
     # If it's the final question, reshape and write data frame to Google Sheets
-    if(data$question == "[Question 5] Submit Assignment?") {
+    if(data$question == "Submit Assignment?") {
       
       # Reshape data frame to long format
       df_long <- df %>% 
         gather(key = "key", value = "value", -user_id, -question_num)
         
-      print("df_long after gather:")
-      print(df_long)
-      
       # Pivot the data frame back to wide format
       df_wide <- df_long %>% 
         pivot_wider(names_from = c("question_num", "key"), names_sep = "_", values_from = "value")
-
-      print("df_wide after pivot_wider:")
-      print(df_wide)
       
       # Generate the column order
       unique_questions <- sort(unique(df$question_num))
-      col_order <- c("user_id", unlist(lapply(unique_questions, function(i) paste0(i, c("_problem", "_points", "_answer", "_correct")))))
-
-      print("col_order:")
-      print(col_order)
+      col_order <- c("user_id", unlist(lapply(unique_questions, function(i) paste0(i, c("_problem", "_answer", "_correct", "_points")))))
       
       # Reorder the columns
       df_wide <- df_wide[, col_order]
@@ -155,7 +148,7 @@ question(
 ```
 
 ```{r submission}
-question("[Question 5] Submit Assignment?",
+question("Submit Assignment?",
          answer("Yes", correct = TRUE)
          )
 ```
