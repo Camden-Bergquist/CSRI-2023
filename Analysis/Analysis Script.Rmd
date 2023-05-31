@@ -43,9 +43,6 @@ data_long <- full_join(problems, answers, by = c("user_id", "question")) %>%
 data_long$correct <- as.logical(data_long$correct)
 data_long$points <- as.integer(data_long$points)
 
-# Check the data
-data_long
-
 ```
 
 ``` {r Table, include = FALSE}
@@ -58,10 +55,36 @@ user_data <- data_long %>%
   group_by(user_id, correct) %>%
   summarise(n = n(), .groups = 'drop')
 
+# Calculate the number of correct answers per user
+correct_answers_user <- user_data %>%
+  filter(correct == TRUE) %>%
+  rename(correct_count = n) %>%
+  select(-correct)
+
+# Join correct_counts back to user_data
+user_data <- left_join(user_data, correct_answers_user, by = "user_id")
+
+# Reorder the levels of the factor variable "user_id" based on the number of correct answers
+user_data$user_id <- forcats::fct_reorder(user_data$user_id, user_data$correct_count)
+
+
 # Aggregate data by question and correct
 question_data <- data_long %>%
   group_by(question, correct) %>%
   summarise(n = n(), .groups = 'drop')
+
+# Calculate the number of correct answers per question
+correct_answers <- question_data %>%
+  filter(correct == TRUE) %>%
+  rename(correct_count = n) %>%
+  select(-correct)
+
+# Join correct_counts back to question_data
+question_data <- left_join(question_data, correct_answers, by = "question")
+
+# Reorder the levels of the factor variable "question" based on the number of correct answers
+question_data$question <- forcats::fct_reorder(question_data$question, question_data$correct_count)
+
 ```
 
 ## Submissions by User:
@@ -69,8 +92,8 @@ question_data <- data_long %>%
 ``` {r User Visual}
 # Bar plot of submissions by user, colored by whether they are correct or not
 ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
-  geom_bar(stat = 'identity', position = 'dodge') +
-  labs(x = "User ID", y = "Number of Submissions", fill = "Correctness") +
+  geom_bar(stat = 'identity', position = 'stack') +
+  labs(x = "User ID", y = "Count", fill = "Correctness") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -80,14 +103,13 @@ ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
 ``` {r Question Visual}
 # Bar plot of submissions by question, colored by whether they are correct or not
 ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
-  geom_bar(stat = 'identity', position = 'fill') +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = "Question", y = "Ratio", fill = "Correctness") +
+  geom_bar(stat = 'identity', position = 'stack') +
+  labs(x = "Question", y = "Count", fill = "Correctness") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-``` {r Incorrect Table}
+``` {r Incorrect Table, include = FALSE}
 # Calculate the number of correct answers per question
 incorrect_answers <- question_data %>%
   filter(correct == FALSE)
@@ -123,7 +145,7 @@ grading <- grading %>%
 # Assign letter grade
 grading <- grading %>%
   mutate(letter_grade = case_when(
-    percentage >= 90 ~ "A",
+    percentage >= 93 ~ "A",
     percentage >= 80 ~ "B",
     percentage >= 70 ~ "C",
     percentage >= 60 ~ "D",

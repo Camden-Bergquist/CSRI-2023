@@ -259,52 +259,100 @@ it later.</p>
 <script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
 </div>
 </div>
+<div class="panel panel-default tutorial-question-container">
+<div data-label="submission" class="tutorial-question panel-body">
+<div id="submission-answer_container" class="shiny-html-output"></div>
+<div id="submission-message_container" class="shiny-html-output"></div>
+<div id="submission-action_button_container" class="shiny-html-output"></div>
+<script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
+</div>
+</div>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
 library(learnr)
 library(tidyverse)
-
-library(learnr)
 library(googlesheets4)
+library(dplyr)
+library(tidyr)
+library(purrr)
 
+# Set tutorial options
 tutorial_options(exercise.eval = FALSE)
 
-# Initialize a data frame.
-df <- data.frame(user_id = character(),
-                 question = character(),
-                 answer = character(), 
-                 correct = logical(),
-                 stringsAsFactors = FALSE) # Set this to avoid factors
+# Initialize an empty data frame
+df <- data.frame(
+  user_id = character(),
+  question = character(),
+  points = integer(),
+  answer = character(), 
+  correct = logical(),
+  stringsAsFactors = FALSE  # Prevent strings being converted to factors
+)
 
-# Define a custom event recorder function.
+# Function to record tutorial events
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+  
+  # Check if event is exercise_submission or question_submission
   if (event %in% c("exercise_submission", "question_submission")) {
-    # Add the new row to the dataframe
-    new_row <- data.frame(user_id = user_id,
-                          question = data$question,
-                          answer = data$answer, 
-                          correct = ifelse(data$correct, TRUE, FALSE),
-                          stringsAsFactors = FALSE) # Set this to avoid factors
-
-    # Combine the existing data frame with the new row
-    df <<- rbind(df, new_row)
     
-    # If it's the final question or exercise, write to Google Sheets
-      if(data$question == "The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.") {
-      ss <- gs4_create(name = "Assignment 1 Log")
-      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
-                  sheet = "Sheet1")
+    # Extract question number from the question
+    question_num <- ifelse(grepl("\\[Question \\d+\\]", data$question), 
+                           gsub(".*\\[Question (\\d+)\\].*", "\\1", data$question), NA)
+    
+    # Extract points from the question
+    points <- ifelse(grepl("\\[Points: \\d+\\]", data$question), 
+                     as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
+    
+    # Extract problem without [Question X] and [Points: X]
+    problem <- gsub("\\[Question \\d+\\]|\\[Points: \\d+\\]", "", data$question)
+    
+    # Create new row with event data
+    new_row <- data.frame(
+      user_id = user_id,
+      problem = problem,  # use the new problem variable here
+      points = points,
+      answer = data$answer, 
+      correct = ifelse(data$correct, TRUE, FALSE),
+      question_num = paste0("Q", question_num),  # Add "Q" before the question number
+      stringsAsFactors = FALSE  # Prevent strings being converted to factors
+    )
+
+    # Append new row to global data frame only if the data's question is not "Submit Assignment?"
+    if(data$question != "Submit Assignment?") {
+      df <<- rbind(df, new_row)
+    }
+
+    # If it's the final question, reshape and write data frame to Google Sheets
+    if(data$question == "Submit Assignment?") {
+      
+      # Reshape data frame to long format
+      df_long <- df %>% 
+        gather(key = "key", value = "value", -user_id, -question_num)
+        
+      # Pivot the data frame back to wide format
+      df_wide <- df_long %>% 
+        pivot_wider(names_from = c("question_num", "key"), names_sep = "_", values_from = "value")
+      
+      # Generate the column order
+      unique_questions <- sort(unique(df$question_num))
+      col_order <- c("user_id", unlist(lapply(unique_questions, function(i) paste0(i, c("_problem", "_answer", "_correct", "_points")))))
+      
+      # Reorder the columns
+      df_wide <- df_wide[, col_order]
+
+      # Create a new Google Sheet and write the data frame to it
+      ss <- gs4_create(name = "logfile")
+      sheet_write(df_wide, ss = ss, sheet = "Sheet1")
     }
   }
 }
 
-# Set the global option
+
+# Set the global option to use our event recorder function
 options(tutorial.event_recorder = event_recorder)
 
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
-# Used in some exercises
-load("data/ucb_admit.RData")
+# Set knitr options
+knitr::opts_chunk$set(echo = FALSE)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
@@ -329,16 +377,16 @@ session$onSessionEnded(function() {
  
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz-identify-type-study-1", 
-    question = structure("What type of study is this?", html = TRUE, class = c("html", 
-    "character")), answers = list(structure(list(id = "lnr_ans_51cd62", 
+    question = structure("[Question 1] [Points: 1] What type of study is this?", html = TRUE, class = c("html", 
+    "character")), answers = list(structure(list(id = "lnr_ans_426a1cd", 
         option = "Observational study", value = "Observational study", 
         label = structure("Observational study", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = structure("Not quite, this is not an observational study.", html = TRUE, class = c("html", 
         "character")), type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_5794adc", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_caa738d", 
         option = "Experiment", value = "Experiment", label = structure("Experiment", html = TRUE, class = c("html", 
         "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_d799409", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_4ffae0", 
         option = "Neither, since the sample consists of volunteers", 
         value = "Neither, since the sample consists of volunteers", 
         label = structure("Neither, since the sample consists of volunteers", html = TRUE, class = c("html", 
@@ -352,32 +400,32 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
     "character")), message = NULL, post_message = NULL), ids = list(
         answer = "quiz-identify-type-study-1-answer", question = "quiz-identify-type-study-1"), 
     loading = NULL, random_answer_order = FALSE, allow_retry = TRUE, 
-    seed = 933141828.065472, options = list()), class = c("learnr_radio", 
+    seed = 1175454243.45264, options = list()), class = c("learnr_radio", 
 "tutorial_question")), session = session)
 </script>
 
 
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz-random-sampling-1", 
-    question = structure("Does this study employ random sampling and/or random assignment?", html = TRUE, class = c("html", 
-    "character")), answers = list(structure(list(id = "lnr_ans_dbfb697", 
+    question = structure("[Question 2] [Points: 2] Does this study employ random sampling and/or random assignment?", html = TRUE, class = c("html", 
+    "character")), answers = list(structure(list(id = "lnr_ans_e24b1e9", 
         option = "Random sampling, but not random assignment", 
         value = "Random sampling, but not random assignment", 
         label = structure("Random sampling, but not random assignment", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = structure("Hm, not quite!", html = TRUE, class = c("html", 
         "character")), type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_64fde64", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_4dfb08e", 
         option = "Random assignment, but not random sampling", 
         value = "Random assignment, but not random sampling", 
         label = structure("Random assignment, but not random sampling", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = structure("Try again!", html = TRUE, class = c("html", 
         "character")), type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_4c3a760", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_a224664", 
         option = "Neither random sampling nor random assignment", 
         value = "Neither random sampling nor random assignment", 
         label = structure("Neither random sampling nor random assignment", html = TRUE, class = c("html", 
         "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_47ffab1", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_ff534e2", 
         option = "Both random sampling and random assignment", 
         value = "Both random sampling and random assignment", 
         label = structure("Both random sampling and random assignment", html = TRUE, class = c("html", 
@@ -390,26 +438,26 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
     "character")), message = NULL, post_message = NULL), ids = list(
         answer = "quiz-random-sampling-1-answer", question = "quiz-random-sampling-1"), 
     loading = NULL, random_answer_order = FALSE, allow_retry = TRUE, 
-    seed = 1196470850.44285, options = list()), class = c("learnr_radio", 
+    seed = 1967332970.58389, options = list()), class = c("learnr_radio", 
 "tutorial_question")), session = session)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz-identify-scope-1", 
-    question = structure("The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.", html = TRUE, class = c("html", 
-    "character")), answers = list(structure(list(id = "lnr_ans_8db8b7a", 
+    question = structure("[Question 3] The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.", html = TRUE, class = c("html", 
+    "character")), answers = list(structure(list(id = "lnr_ans_df9f9a8", 
         option = "cannot, cannot", value = "cannot, cannot", 
         label = structure("cannot, cannot", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = structure("Nope, try again!", html = TRUE, class = c("html", 
         "character")), type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_582f436", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_25cfd64", 
         option = "cannot, can", value = "cannot, can", label = structure("cannot, can", html = TRUE, class = c("html", 
         "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_602b959", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_4f7579c", 
         option = "can, cannot", value = "can, cannot", label = structure("can, cannot", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = structure("Not quite!", html = TRUE, class = c("html", 
         "character")), type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_dac02fa", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_b2f366c", 
         option = "can, can", value = "can, can", label = structure("can, can", html = TRUE, class = c("html", 
         "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
     "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
@@ -420,8 +468,26 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
     "character")), message = NULL, post_message = NULL), ids = list(
         answer = "quiz-identify-scope-1-answer", question = "quiz-identify-scope-1"), 
     loading = NULL, random_answer_order = FALSE, allow_retry = TRUE, 
-    seed = 1292242194.39825, options = list()), class = c("learnr_radio", 
+    seed = 987326536.04024, options = list()), class = c("learnr_radio", 
 "tutorial_question")), session = session)
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "submission", question = structure("Submit Assignment?", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_70ccbb", 
+    option = "Yes", value = "Yes", label = structure("Yes", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
+"character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
+"character"))), messages = list(correct = structure("Correct!", html = TRUE, class = c("html", 
+"character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
+"character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
+"character")), message = NULL, post_message = NULL), ids = list(
+    answer = "submission-answer", question = "submission"), loading = NULL, 
+    random_answer_order = FALSE, allow_retry = FALSE, seed = 817961241.119107, 
+    options = list()), class = c("learnr_radio", "tutorial_question"
+)), session = session)
 </script>
 </p>
 <!--html_preserve-->

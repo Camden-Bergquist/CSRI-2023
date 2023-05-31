@@ -11,48 +11,88 @@ runtime: shiny_prerendered
 ```{r setup, include=FALSE}
 library(learnr)
 library(tidyverse)
-
-library(learnr)
 library(googlesheets4)
+library(dplyr)
+library(tidyr)
+library(purrr)
 
+# Set tutorial options
 tutorial_options(exercise.eval = FALSE)
 
-# Initialize a data frame.
-df <- data.frame(user_id = character(),
-                 question = character(),
-                 answer = character(), 
-                 correct = logical(),
-                 stringsAsFactors = FALSE) # Set this to avoid factors
+# Initialize an empty data frame
+df <- data.frame(
+  user_id = character(),
+  question = character(),
+  points = integer(),
+  answer = character(), 
+  correct = logical(),
+  stringsAsFactors = FALSE  # Prevent strings being converted to factors
+)
 
-# Define a custom event recorder function.
+# Function to record tutorial events
 event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+  
+  # Check if event is exercise_submission or question_submission
   if (event %in% c("exercise_submission", "question_submission")) {
-    # Add the new row to the dataframe
-    new_row <- data.frame(user_id = user_id,
-                          question = data$question,
-                          answer = data$answer, 
-                          correct = ifelse(data$correct, TRUE, FALSE),
-                          stringsAsFactors = FALSE) # Set this to avoid factors
-
-    # Combine the existing data frame with the new row
-    df <<- rbind(df, new_row)
     
-    # If it's the final question or exercise, write to Google Sheets
-      if(data$question == "The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.") {
-      ss <- gs4_create(name = "Assignment 1 Log")
-      sheet_write(dplyr::select(df, user_id, question, answer, correct), ss = ss,
-                  sheet = "Sheet1")
+    # Extract question number from the question
+    question_num <- ifelse(grepl("\\[Question \\d+\\]", data$question), 
+                           gsub(".*\\[Question (\\d+)\\].*", "\\1", data$question), NA)
+    
+    # Extract points from the question
+    points <- ifelse(grepl("\\[Points: \\d+\\]", data$question), 
+                     as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
+    
+    # Extract problem without [Question X] and [Points: X]
+    problem <- gsub("\\[Question \\d+\\]|\\[Points: \\d+\\]", "", data$question)
+    
+    # Create new row with event data
+    new_row <- data.frame(
+      user_id = user_id,
+      problem = problem,  # use the new problem variable here
+      points = points,
+      answer = data$answer, 
+      correct = ifelse(data$correct, TRUE, FALSE),
+      question_num = paste0("Q", question_num),  # Add "Q" before the question number
+      stringsAsFactors = FALSE  # Prevent strings being converted to factors
+    )
+
+    # Append new row to global data frame only if the data's question is not "Submit Assignment?"
+    if(data$question != "Submit Assignment?") {
+      df <<- rbind(df, new_row)
+    }
+
+    # If it's the final question, reshape and write data frame to Google Sheets
+    if(data$question == "Submit Assignment?") {
+      
+      # Reshape data frame to long format
+      df_long <- df %>% 
+        gather(key = "key", value = "value", -user_id, -question_num)
+        
+      # Pivot the data frame back to wide format
+      df_wide <- df_long %>% 
+        pivot_wider(names_from = c("question_num", "key"), names_sep = "_", values_from = "value")
+      
+      # Generate the column order
+      unique_questions <- sort(unique(df$question_num))
+      col_order <- c("user_id", unlist(lapply(unique_questions, function(i) paste0(i, c("_problem", "_answer", "_correct", "_points")))))
+      
+      # Reorder the columns
+      df_wide <- df_wide[, col_order]
+
+      # Create a new Google Sheet and write the data frame to it
+      ss <- gs4_create(name = "logfile")
+      sheet_write(df_wide, ss = ss, sheet = "Sheet1")
     }
   }
 }
 
-# Set the global option
+
+# Set the global option to use our event recorder function
 options(tutorial.event_recorder = event_recorder)
 
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
-# Used in some exercises
-load("data/ucb_admit.RData")
+# Set knitr options
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## Observational studies and experiments
@@ -90,7 +130,7 @@ A study is designed to evaluate whether people read text faster in Arial or Helv
 
 ```{r quiz-identify-type-study}
 quiz(
-  question("What type of study is this?", correct = "Awesome! Even though participants are volunteers, this is still an experiment!", allow_retry = TRUE,
+  question("[Question 1] [Points: 1] What type of study is this?", correct = "Awesome! Even though participants are volunteers, this is still an experiment!", allow_retry = TRUE,
     answer("Observational study", message = "Not quite, this is not an observational study."),
     answer("Experiment", correct = TRUE),
     answer("Neither, since the sample consists of volunteers", message = "Try again!")
@@ -127,7 +167,7 @@ One of the early studies linking smoking and lung cancer compared patients who a
 
 ```{r quiz-random-sampling}
 quiz(
-  question("Does this study employ random sampling and/or random assignment?", correct = "Right! Random assignment is not employed because the conditions are not imposed on the patients by the people conducting the study; random sampling is not employed because the study records the patients who are already hospitalized, so it wouldn't be appropriate to apply the findings back to the population as a whole.", allow_retry = TRUE,
+  question("[Question 2] [Points: 2] Does this study employ random sampling and/or random assignment?", correct = "Right! Random assignment is not employed because the conditions are not imposed on the patients by the people conducting the study; random sampling is not employed because the study records the patients who are already hospitalized, so it wouldn't be appropriate to apply the findings back to the population as a whole.", allow_retry = TRUE,
     answer("Random sampling, but not random assignment", message = "Hm, not quite!"),
     answer("Random assignment, but not random sampling", message = "Try again!"),
     answer("Neither random sampling nor random assignment", correct = TRUE),
@@ -143,10 +183,16 @@ Then, the subjects were asked to remember these bits of trivia, and the number o
 
 ```{r quiz-identify-scope}
 quiz(
-  question("The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.", correct = "Correct! There is no random sampling since the subjects of the study were volunteers, so the results cannot be generalized to all people. However, due to random assignment, we are able to infer a causal link between the belief information is stored and the ability to recall that same information.", allow_retry = TRUE,
+  question("[Question 3] The results of the study ______ be generalized to all people and a causal link between believing information is stored and memory ______ be inferred based on these results.", correct = "Correct! There is no random sampling since the subjects of the study were volunteers, so the results cannot be generalized to all people. However, due to random assignment, we are able to infer a causal link between the belief information is stored and the ability to recall that same information.", allow_retry = TRUE,
     answer("cannot, cannot", message = "Nope, try again!"),
     answer("cannot, can", correct = TRUE),
     answer("can, cannot", message = "Not quite!"),
     answer("can, can")
 ), caption = "")
+```
+
+``` {r submission}
+question("Submit Assignment?",
+         answer("Yes", correct = TRUE)
+         )
 ```
