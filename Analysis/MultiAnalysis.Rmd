@@ -1,0 +1,154 @@
+---
+title: "MultiAnalysis"
+author: "Camden"
+date: "2023-06-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(purrr)
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load}
+process_file <- function(filename) {
+  # Extract assignment_id from filename
+  assignment_id <- tools::file_path_sans_ext(basename(filename))
+  
+  # Load data
+  data <- read.csv(filename)
+  
+  # Separate columns into problems, answers, correctness and points
+  problems <- data %>%
+    select(user_id, starts_with("Q") & ends_with("_problem")) %>%
+    pivot_longer(-user_id, names_to = "question", values_to = "problem", names_pattern = "(Q\\d+)_problem")
+
+  answers <- data %>%
+    select(user_id, starts_with("Q") & ends_with("_answer")) %>%
+    pivot_longer(-user_id, names_to = "question", values_to = "answer", names_pattern = "(Q\\d+)_answer")
+
+  correctness <- data %>%
+    select(user_id, starts_with("Q") & ends_with("_correct")) %>%
+    pivot_longer(-user_id, names_to = "question", values_to = "correct", names_pattern = "(Q\\d+)_correct")
+
+  points <- data %>%
+    select(user_id, starts_with("Q") & ends_with("_points")) %>%
+    pivot_longer(-user_id, names_to = "question", values_to = "points", names_pattern = "(Q\\d+)_points")
+
+  # Combine reshaped data
+  data_long <- full_join(problems, answers, by = c("user_id", "question")) %>%
+    full_join(correctness, by = c("user_id", "question")) %>%
+    full_join(points, by = c("user_id", "question"))
+
+  # Convert correct column to logical and points to integer
+  data_long$correct <- as.logical(data_long$correct)
+  data_long$points <- as.integer(data_long$points)
+
+  # Add assignment_id
+  data_long <- data_long %>%
+    mutate(assignment_id = assignment_id)
+
+  return(data_long)
+}
+
+# Assuming CSV files are stored in the same directory './data'
+filenames <- list.files(path = './multiData', pattern = "*.csv", full.names = TRUE)
+
+# Apply function to each file and bind them into a single data frame
+all_data <- map_df(filenames, process_file)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r aggregate}
+# Aggregate data by user_id, assignment_id, and correct
+user_data <- all_data %>%
+  group_by(user_id, assignment_id, correct) %>%
+  summarise(n = n(), .groups = 'drop')
+
+# Calculate the number of correct answers per user per assignment
+correct_answers_user <- user_data %>%
+  filter(correct == TRUE) %>%
+  rename(correct_count = n) %>%
+  select(-correct)
+
+# Join correct_counts back to user_data
+user_data <- left_join(user_data, correct_answers_user, by = c("user_id", "assignment_id"))
+
+# Aggregate data by assignment_id, question and correct
+question_data <- all_data %>%
+  group_by(assignment_id, question, correct) %>%
+  summarise(n = n(), .groups = 'drop')
+
+# Calculate the number of correct answers per question per assignment
+correct_answers <- question_data %>%
+  filter(correct == TRUE) %>%
+  rename(correct_count = n) %>%
+  select(-correct)
+
+# Join correct_counts back to question_data
+question_data <- left_join(question_data, correct_answers, by = c("assignment_id", "question"))
+
+```
+
+```{r user submisson}
+# Bar plot of submissions by user, colored by whether they are correct or not
+ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
+  geom_bar(stat = 'identity', position = 'stack') +
+  facet_wrap(~ assignment_id) +
+  labs(x = "User ID", y = "Count", fill = "Correctness") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r question submisson}
+# Bar plot of submissions by question, colored by whether they are correct or not
+ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
+  geom_bar(stat = 'identity', position = 'stack') +
+  facet_wrap(~ assignment_id) +
+  labs(x = "Question", y = "Count", fill = "Correctness") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r grade table}
+
+# Calculate total points earned by each student per assignment
+total_points_earned <- all_data %>%
+  filter(correct == TRUE) %>%
+  group_by(user_id, assignment_id) %>%
+  summarise(total_earned = sum(points, na.rm = TRUE))
+
+# Calculate total possible points for the test
+total_points_possible <- all_data %>%
+  group_by(user_id, assignment_id) %>%
+  summarise(total_possible = sum(points, na.rm = TRUE))
+
+# Join total_points_earned and total_points_possible
+grading <- full_join(total_points_earned, total_points_possible, by = c("user_id", "assignment_id"))
+
+# Calculate percentage of points earned
+grading <- grading %>%
+  mutate(percentage = (total_earned / total_possible) * 100)
+
+# Assign letter grade
+grading <- grading %>%
+  mutate(letter_grade = case_when(
+    percentage >= 93 ~ "A",
+    percentage >= 80 ~ "B",
+    percentage >= 70 ~ "C",
+    percentage >= 60 ~ "D",
+    TRUE ~ "F"
+  ))
+
+# Sort by percentage, highest to lowest
+grading <- grading %>%
+  arrange(desc(percentage))
+
+kable(grading)
+```
