@@ -10,6 +10,39 @@ generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
     # Now remove the comment tracking the last question number
     lines <- lines[-grep("<!-- Last question number:", lines)]
     writeLines(lines, file_name)
+  } else {
+    # If the file does not exist, write the setup code chunk to the file
+    fileConn <- file(file_name, open = "a")
+    setup_chunk <- '```{r setup}
+# Import required libraries
+library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(googlesheets4)
+
+# Set tutorial options
+tutorial_options(exercise.eval = FALSE)
+
+# Initialize an empty data frame
+df <- data.frame(
+  user_id = character(),
+  problem = character(),
+  points = integer(),
+  answer = character(), 
+  correct = logical(),
+  question_num = character(),
+  stringsAsFactors = FALSE  # Prevent strings being converted to factors
+)
+
+# Set the global option to use our event recorder function
+options(tutorial.event_recorder = event_recorder)
+
+# Set knitr options
+knitr::opts_chunk$set(echo = FALSE)
+```'
+cat(file=fileConn, setup_chunk, "\n")
+close(fileConn)
   }
   
   repeat {
@@ -20,7 +53,7 @@ generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
     fileConn <- file(file_name, open = "a")
     
     # Prompt for question type
-    cat("Please enter the question type. [1] Multiple choice / [2] Numeric): ")
+    cat("Please enter the question type. [1] Multiple choice / [2] Numeric: ")
     question_type <- readLines(n = 1)
     
     # Prompt for points
@@ -57,7 +90,7 @@ generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
       for (i in 1:num_incorrect) {
         cat(paste0("Please enter incorrect answer ", i, ": "))
         incorrect_answer <- gsub(",", "", readLines(n = 1))
-        answers[[i + num_correct]] <- paste0("answer('", incorrect_answer, "', correct = FALSE)")
+        answers[[i + num_correct]] <- paste0("answer('", incorrect_answer, "')")
       }
       
       # Generate the learnr multiple choice question syntax
@@ -115,5 +148,5 @@ generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
   
   # Write the last question number as a comment at the end of the file
   cat(file=fileConn, paste0("<!-- Last question number: Question ", question_number, " -->"), "\n")
-
+  
 }
