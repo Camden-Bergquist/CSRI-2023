@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "csri-database",
+  "private_key_id": "18c6967d6006f952e9351eaca3d40db6a5be657f",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCWVMDdCPc8+L80\nydtqUpulzoFI69aJDXD0rZggCx6/2F+6FNbl/6Pw/GYiB/VwiuvaQBBWry3JHntp\ncnrefH/rBFIAVg/hAsgm/H0t5s17XH5pGa4WkEMoQXw1jl2EEodMFjVdRMCXwqsj\nVCkvlmzRzRr3SNQ5Rh6coHBO+7JR2V0FDl97Z30B06strTuwKeOBXCWs66AIV8Sg\nlhGz7DM14tzcKwDE+NII6Kf4pi05Tl2X248tVcZjkOME2/PZ0P70OQhNLXkK2ayo\n48PYH6AVtrDR+PoyXOYRphPISd6pZPfCKxXb+vj4clSb+Sb7UDAa7xmJ2icRquk9\nbO/VJcPbAgMBAAECggEADNp/SQbguNZd5uIRgCRDCai/9h+wDrTXARysoqTAws95\n09u/ShgTCOJTyzoZ+r7uDpGms/qzc/xGugvfRJGpkEskxcGWBvupaGfzPg77Z75P\nUqYu89/u1gzPVXbwOQAqkE9fzbM4smEjJ9ik0txOPpwGX7la5/C+Yk73e1Fa/FNz\nVqtR/uU9TWNWBzjrn1dnbXf9cuNcjHyj8dm4b3I2lyaMxRoCfQeRp9bMtGjawAud\n0g4TDlvW4KA9YiDfSO2V7VxewEtZkJEm/fmGlcnk3aSYb3e9FE5ol3+W0omDDVq3\nNqrIoc4R4EH+uIq708j9vE5Q7gIepxwYXDCIFgao/QKBgQDSh8vYjJNEErpNI0f/\n7arnMXpacHAGNudD8tq8kOb+3E010sgHgN7OI+V5kjam9EyQdbIRGh9wN6TNlWn+\n4Dzd79adgygyl5pWsWwmTJzz9twIpY8tW3kfrin+m0KUAmxps3ReYFc40efiOiFW\ne+CDRtPNBxNAEpjcrjo2mgMnhwKBgQC2zIpKtZLziBJKNdhMz7iJjifJx6Z0+sDp\npFvQQJJ8Zw4yqw4+0hz0F229wJ3Xr6TEuC0NB1yQlRXc578xT+KIRPKYoJQ7d3DJ\ntKarQlh/UvAIxejN6TXUyKuapBfTZU7rshvfxhNItoxSJjPPAxxdwXzCNI+L9QIh\nA3koiqmuDQKBgQCdR1XCMULTWCpV9kWTrLpAfXYqmlUWT232FTfUJ2xqeao0y4Mk\nF+JbnfWRHOo3T8rjIQomPJ2/99Hmw/irsFnIc6Shh5pAMYHbwjBJbHLUz1cSHp0Y\nBX43bKVy0AqtCCJ11Nrapp6ClE3ndAXz1hej+wW/5ck71KjeNErI/8XbgQKBgFT1\n5CCtG8vMppOPSyUINoDYbW2/OYKNOTRei73TBUKEs3ihQFG6XnKkoQDckYA5xp8X\n6vhvP3qDkFHH9Hj65BLp2MdPexXYgbd+GyjmATPMXHv3YCi0B60KR5fsRJagM3og\nogvzh+r3zWgxEUtZ6sk4sL+ipkUqbv7hGmLZb9vRAoGAGVX/RW+Wz1rpr4DHCGfl\nyAUvHDM8NywoDbB8vO+9/PKlgA65WzjwwlORBNn7nErsrS0bx5DiZcOyP19e1Y6s\nfQJV9jOsYYs082JTimhjO7OiI2TyXinvaolGqRPm3llr/BpWQWBgdYmq1/Xbw8l0\nWWvLzlrNVnjTRaidaJTdwBQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "sheets-auth@csri-database.iam.gserviceaccount.com",
+  "client_id": "114792742887589143370",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sheets-auth%40csri-database.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

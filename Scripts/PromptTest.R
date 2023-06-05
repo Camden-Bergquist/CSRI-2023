@@ -13,7 +13,13 @@ generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
   } else {
     # If the file does not exist, write the setup code chunk to the file
     fileConn <- file(file_name, open = "a")
-    setup_chunk <- '```{r setup}
+    setup_chunk <- '---
+title: ""
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup}
 # Import required libraries
 library(learnr)
 library(dplyr)
@@ -95,7 +101,7 @@ close(fileConn)
       
       # Generate the learnr multiple choice question syntax
       question_block <- paste0(
-        "\n\n```{r question", question_number, "}\n",
+        "\n\n```{r question ", question_number, "}\n",
         "question(\"", question_query, "\",\n",
         "    ", paste(answers, collapse = ",\n    "), ",\n",
         "    allow_retry = TRUE,\n",
@@ -119,8 +125,8 @@ close(fileConn)
       
       # Generate the learnr numeric question syntax
       question_block <- paste0(
-        "\n\n```{r question", question_number, "}\n",
-        "question(\"", question_query, "\",\n",
+        "\n\n```{r question ", question_number, "}\n",
+        "question_numeric(\"", question_query, "\",\n",
         "    answer(", correct_answer, ", correct = TRUE),\n",
         "    allow_retry = TRUE,\n",
         "    tolerance = ", tolerance, ")\n",
