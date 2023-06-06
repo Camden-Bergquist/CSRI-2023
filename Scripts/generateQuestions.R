@@ -1,4 +1,4 @@
-generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
+generateQuestions <- function(file_name = "Assignment.Rmd") {
   # Initialize question number
   question_number <- 0
   if (file.exists(file_name)) {
@@ -6,9 +6,12 @@ generate_learnr_question <- function(file_name = "learnr_questions.Rmd") {
     last_question_line <- grep("<!-- Last question number:", lines, value = TRUE)
     if (length(last_question_line) > 0) {
       question_number <- as.numeric(sub(".*Question ([0-9]+).*", "\\1", last_question_line))
+      # Find the index of the last question comment
+      last_line_index <- grep("<!-- Last question number:", lines)
+      # Remove all lines from the last question comment onwards
+      lines <- lines[1:(last_line_index - 1)]
     }
-    # Now remove the comment tracking the last question number
-    lines <- lines[-grep("<!-- Last question number:", lines)]
+    # Write the lines back to the file
     writeLines(lines, file_name)
   } else {
     # If the file does not exist, write the setup code chunk to the file
@@ -48,7 +51,7 @@ options(tutorial.event_recorder = event_recorder)
 knitr::opts_chunk$set(echo = FALSE)
 ```'
 cat(file=fileConn, setup_chunk, "\n")
-close(fileConn)
+tryCatch(close(fileConn), error=function(e) NULL)
   }
   
   repeat {
@@ -59,7 +62,7 @@ close(fileConn)
     fileConn <- file(file_name, open = "a")
     
     # Prompt for question type
-    cat("Please enter the question type. [1] Multiple choice / [2] Numeric: ")
+    cat("Please enter the question type. [1] Multiple Choice / [2] Numeric: ")
     question_type <- readLines(n = 1)
     
     # Prompt for points
@@ -72,7 +75,7 @@ close(fileConn)
       question_query <- readLines(n = 1)
       
       # Add question number and points to the query
-      question_query <- paste0("[Question ", question_number, "] [Points: ", points, "] ", question_query)
+      question_query <- paste0("[Question_", question_number, "] [Points: ", points, "] ", question_query)
       
       # Prompt for the number of correct answers
       cat("Please enter the number of correct answers: ")
@@ -114,7 +117,7 @@ close(fileConn)
       question_query <- readLines(n = 1)
       
       # Add question number and points to the query
-      question_query <- paste0("[Question ", question_number, "] [Points: ", points, "] ", question_query)
+      question_query <- paste0("[Question_", question_number, "] [Points: ", points, "] ", question_query)
       
       cat("Please enter the correct answer: ")
       correct_answer <- gsub(",", "", readLines(n = 1))
@@ -138,7 +141,7 @@ close(fileConn)
     cat(file=fileConn, question_block, "\n")
     
     # Close the RMarkdown file
-    close(fileConn)
+    tryCatch(close(fileConn), error=function(e) NULL)
     
     # Ask the user if they want to generate another question
     cat("Would you like to generate another question? [1] Yes / [0] No: ")
@@ -149,10 +152,17 @@ close(fileConn)
   # Open the RMarkdown file
   fileConn <- file(file_name, open = "a")
   
-  # Ensure the file connection is closed when exiting this function or in case of error
-  on.exit(close(fileConn), add = TRUE)
-  
   # Write the last question number as a comment at the end of the file
-  cat(file=fileConn, paste0("<!-- Last question number: Question ", question_number, " -->"), "\n")
+  cat(file=fileConn, paste0("<!-- Last question number: Question \n", question_number, " -->"), "\n")
   
+  # Add submission block
+  submission_block <- '```{r submission}
+question("Submit Assignment?",
+         answer("Yes", correct = TRUE)
+         )
+```'
+  cat(file=fileConn, submission_block, "\n")
+  
+  # Close the RMarkdown file
+  tryCatch(close(fileConn), error=function(e) NULL)
 }

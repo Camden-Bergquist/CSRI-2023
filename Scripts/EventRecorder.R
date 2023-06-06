@@ -1,5 +1,39 @@
+# Import required libraries
+library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(googlesheets4)
+library(googledrive)
+
+# Set tutorial options
+tutorial_options(exercise.eval = FALSE)
+
+# Initialize an empty data frame
+df <- data.frame(
+  user_id = character(),
+  problem = character(),
+  points = integer(),
+  answer = character(), 
+  correct = logical(),
+  question_num = character(),
+  stringsAsFactors = FALSE  # Prevent strings being converted to factors
+)
+
 # Function to record tutorial events
-event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+eventRecorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+  
+  # Authenticate with Google Sheets
+  gs4_auth(
+    path = "~/CSRI-2023/Auth/csri-database-token.json",
+    scopes = c(
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive"
+    )
+  )
+  
+  # Authenticate with Google Drive
+  drive_auth(path = "~/CSRI-2023/Auth/csri-database-token.json")
   
   # Check if event is exercise_submission or question_submission
   if (event %in% c("exercise_submission", "question_submission")) {
@@ -28,12 +62,12 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
     # Create new row with event data
     new_row <- data.frame(
       user_id = user_id,
-      problem = problem,  # use the new problem variable here
+      problem = problem,
       points = points,
       answer = data$answer, 
       correct = ifelse(data$correct, TRUE, FALSE),
-      question_num = paste0("Q", question_num, "_", attempt_num),  # Add "Q" before the question number and "_attempt_num"
-      stringsAsFactors = FALSE  # Prevent strings being converted to factors
+      question_num = paste0("Q", question_num, "_", attempt_num),
+      stringsAsFactors = FALSE
     )
     
     # Append new row to global data frame only if the data's question is not "Submit Assignment?"
@@ -62,6 +96,14 @@ event_recorder <- function(tutorial_id, tutorial_version, user_id, event, data) 
       # Create a new Google Sheet and write the data frame to it
       ss <- gs4_create(name = "logfile")
       sheet_write(df_wide, ss = ss, sheet = "Sheet1")
+      
+      # Share the new Google Sheet with a user
+      drive_share(
+        ss,
+        role = "writer",
+        type = "user",
+        emailAddress = "cbergquist25@cornellcollege.edu"
+      )
     }
   }
 }
