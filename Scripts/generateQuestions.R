@@ -51,6 +51,27 @@ options(tutorial.event_recorder = event_recorder)
 knitr::opts_chunk$set(echo = FALSE)
 ```'
 cat(file=fileConn, setup_chunk, "\n")
+
+cat("Would you like to add an authentication block? [1] Yes / [0] No: ")
+auth_answer <- readLines(n = 1)
+if (auth_answer == "1") {
+  # Read pins from the CSV file
+  pins <- t(as.vector(read.csv("~/CSRI-2023/Scripts/pinData.csv", header = FALSE)))
+  
+  # Generate authentication block
+  pin_answers <- paste0("answer(", pins, ", correct = TRUE)", collapse = ",\n    ")
+  
+  authentication_block <- paste0(
+    "\n\n```{r auth_question}\n",
+    "question_text(\"Enter your PIN:\",\n",
+    "    '", pin_answers, "',\n",
+    "    allow_retry = TRUE,\n",
+    "    tolerance = 0)\n",
+    "```"
+  )
+  
+  cat(file=fileConn, authentication_block, "\n")
+}
 tryCatch(close(fileConn), error=function(e) NULL)
   }
   
@@ -153,7 +174,7 @@ tryCatch(close(fileConn), error=function(e) NULL)
   fileConn <- file(file_name, open = "a")
   
   # Write the last question number as a comment at the end of the file
-  cat(file=fileConn, paste0("<!-- Last question number: Question \n", question_number, " -->"), "\n")
+  cat(file=fileConn, paste0("<!-- Last question number: Question ", question_number, " -->"), "\n")
   
   # Add submission block
   submission_block <- '```{r submission}
