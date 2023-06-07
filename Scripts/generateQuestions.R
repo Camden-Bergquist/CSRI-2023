@@ -29,31 +29,28 @@ library(dplyr)
 library(tidyr)
 library(purrr)
 library(googlesheets4)
+library(googledrive)
 
-# Set tutorial options
-tutorial_options(exercise.eval = FALSE)
+source("~/CSRI-2023/Scripts/EventRecorder.R")
 
-# Initialize an empty data frame
-df <- data.frame(
-  user_id = character(),
-  problem = character(),
-  points = integer(),
-  answer = character(), 
-  correct = logical(),
-  question_num = character(),
-  stringsAsFactors = FALSE  # Prevent strings being converted to factors
-)
-
-# Set the global option to use our event recorder function
-options(tutorial.event_recorder = event_recorder)
+# REQUIRED: Set the global option to use our event recorder function.
+options(tutorial.eventRecorder = eventRecorder)
 
 # Set knitr options
 knitr::opts_chunk$set(echo = FALSE)
 ```'
 cat(file=fileConn, setup_chunk, "\n")
 
-cat("Would you like to add an authentication block? [1] Yes / [0] No: ")
-auth_answer <- readLines(n = 1)
+while (TRUE) {
+  cat("Would you like to add an authentication block? [1] Yes / [0] No: ")
+  auth_answer <- readLines(n = 1)
+  if (auth_answer == "1" || auth_answer == "0") {
+    break
+  } else {
+    cat("Invalid response. Please enter 1 for Yes and 0 for No.\n")
+  }
+}
+
 if (auth_answer == "1") {
   # Read pins from the CSV file
   pins <- t(as.vector(read.csv("~/CSRI-2023/Scripts/pinData.csv", header = FALSE)))
@@ -72,6 +69,7 @@ if (auth_answer == "1") {
   
   cat(file=fileConn, authentication_block, "\n")
 }
+
 tryCatch(close(fileConn), error=function(e) NULL)
   }
   
@@ -82,11 +80,16 @@ tryCatch(close(fileConn), error=function(e) NULL)
     # Open the RMarkdown file
     fileConn <- file(file_name, open = "a")
     
-    # Prompt for question type
-    cat("Please enter the question type. [1] Multiple Choice / [2] Numeric: ")
-    question_type <- readLines(n = 1)
+    while (TRUE) {
+      cat("Please enter the question type. [1] Multiple Choice / [2] Numeric: ")
+      question_type <- readLines(n = 1)
+      if (question_type == "1" || question_type == "2") {
+        break
+      } else {
+        cat("Invalid response. Please enter 1 for Multiple Choice and 2 for Numeric.\n")
+      }
+    }
     
-    # Prompt for points
     cat("Please enter the points for this question: ")
     points <- gsub(",", "", readLines(n = 1))
     
@@ -98,7 +101,6 @@ tryCatch(close(fileConn), error=function(e) NULL)
       # Add question number and points to the query
       question_query <- paste0("[Question_", question_number, "] [Points: ", points, "] ", question_query)
       
-      # Prompt for the number of correct answers
       cat("Please enter the number of correct answers: ")
       num_correct <- as.integer(readLines(n = 1))
       
@@ -112,7 +114,6 @@ tryCatch(close(fileConn), error=function(e) NULL)
         answers[[i]] <- paste0("answer('", correct_answer, "', correct = TRUE)")
       }
       
-      # Prompt for the number of incorrect answers
       cat("Please enter the number of incorrect answers: ")
       num_incorrect <- as.integer(readLines(n = 1))
       
@@ -143,7 +144,6 @@ tryCatch(close(fileConn), error=function(e) NULL)
       cat("Please enter the correct answer: ")
       correct_answer <- gsub(",", "", readLines(n = 1))
       
-      # Prompt for tolerance
       cat("Please enter the tolerance: ")
       tolerance <- gsub(",", "", readLines(n = 1))
       
@@ -164,9 +164,16 @@ tryCatch(close(fileConn), error=function(e) NULL)
     # Close the RMarkdown file
     tryCatch(close(fileConn), error=function(e) NULL)
     
-    # Ask the user if they want to generate another question
-    cat("Would you like to generate another question? [1] Yes / [0] No: ")
-    another <- readLines(n = 1)
+    while (TRUE) {
+      cat("Would you like to generate another question? [1] Yes / [0] No: ")
+      another <- readLines(n = 1)
+      if (another == "1" || another == "0") {
+        break
+      } else {
+        cat("Invalid response. Please enter 1 for Yes and 0 for No.\n")
+      }
+    }
+    
     if (another != "1") break
   }
   
