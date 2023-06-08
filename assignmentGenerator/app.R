@@ -128,7 +128,7 @@ library(googledrive)
 source("~/CSRI-2023/Scripts/EventRecorder.R")
 
 # REQUIRED: Set the global option to use our event recorder function.
-options(tutorial.eventRecorder = eventRecorder)
+options(tutorial.event_recorder = eventRecorder)
 
 # Set knitr options
 knitr::opts_chunk$set(echo = FALSE)
@@ -147,10 +147,9 @@ knitr::opts_chunk$set(echo = FALSE)
           # Create the authentication block
           authentication_block <- paste0(
             "\n\n```{r auth}\n",
-            "question_text(\"Enter your PIN:\",\n",
+            "question_text(\"[Authentication] Enter your PIN:\",\n",
             "    ", pin_answers, ",\n",
             "    allow_retry = TRUE,\n",
-            "    tolerance = 0)\n",
             "```\n"
           )
           # Write the authentication block to the file

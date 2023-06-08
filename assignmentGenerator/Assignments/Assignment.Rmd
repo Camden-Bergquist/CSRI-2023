@@ -1,0 +1,84 @@
+---
+title: ""
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: false
+runtime: shiny_prerendered
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(googlesheets4)
+library(googledrive)
+
+source("~/CSRI-2023/Scripts/EventRecorder.R")
+
+# REQUIRED: Set the global option to use our event recorder function.
+options(tutorial.event_recorder = eventRecorder)
+
+# Set knitr options
+knitr::opts_chunk$set(echo = FALSE)
+
+suppressMessages({
+  library(learnr)
+  library(dplyr)
+  library(tidyr)
+  library(purrr)
+  library(googlesheets4)
+  library(googledrive)
+})
+
+``` 
+
+## Authentication
+
+```{r auth}
+question_text("[Authentication] Enter your PIN:",
+    answer('715641', correct = TRUE),
+    answer('750894', correct = TRUE),
+    answer('74849', correct = TRUE),
+    answer('81218', correct = TRUE),
+    answer('517079', correct = TRUE),
+    allow_retry = TRUE)
+```
+ 
+## Question 1
+
+```{r question_1}
+question("[Question 1] [Points: 1] quuu1",
+    answer('yes', correct = TRUE),
+    answer('no', correct = FALSE),
+    answer('nay', correct = FALSE),
+    answer('neigh', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+
+## Question 2
+
+```{r question_2}
+question("[Question 2] [Points: 1] quuutwuuuu",
+    answer('True', correct = TRUE),
+    answer('False', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+
+## Question 3
+
+```{r question_3}
+question_numeric("[Question 3] [Points: 1] quuutwuuuu",
+    answer(12, correct = TRUE),
+    allow_retry = TRUE,
+    tolerance = 0.1)
+```
+<!-- Last question number: Question 3 --> 
+```{r submission}
+question("Submit Assignment?",
+       answer("Yes", correct = TRUE)
+       )
+``` 

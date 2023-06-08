@@ -17,7 +17,7 @@ library(googledrive)
 source("~/CSRI-2023/Scripts/EventRecorder.R")
 
 # REQUIRED: Set the global option to use our event recorder function.
-options(tutorial.eventRecorder = eventRecorder)
+options(tutorial.event_recorder = eventRecorder)
 
 # Set knitr options
 knitr::opts_chunk$set(echo = FALSE)

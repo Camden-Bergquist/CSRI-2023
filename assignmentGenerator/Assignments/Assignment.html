@@ -10,11 +10,11 @@
 
 
 
-<meta name="progressive" content="false" />
+<meta name="progressive" content="true" />
 <meta name="allow-skip" content="false" />
 <meta name="learnr-version-prerender" content="0.11.3" />
 
-<title>Learnr Test</title>
+<title>Assignment.knit</title>
 
 <!-- header-includes START -->
 <!-- HEAD_CONTENT -->
@@ -109,38 +109,50 @@ if (window.hljs) {
 
 <article class="topics" id="learnr-tutorial-content">
 
+<div id="section-authentication" class="section level2">
+<h2>Authentication</h2>
 <div class="panel panel-default tutorial-question-container">
-<div data-label="multiplechoice" class="tutorial-question panel-body">
-<div id="multiplechoice-answer_container" class="shiny-html-output"></div>
-<div id="multiplechoice-message_container" class="shiny-html-output"></div>
-<div id="multiplechoice-action_button_container" class="shiny-html-output"></div>
+<div data-label="auth" class="tutorial-question panel-body">
+<div id="auth-answer_container" class="shiny-html-output"></div>
+<div id="auth-message_container" class="shiny-html-output"></div>
+<div id="auth-action_button_container" class="shiny-html-output"></div>
 <script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
 </div>
 </div>
+</div>
+<div id="section-question-1" class="section level2">
+<h2>Question 1</h2>
 <div class="panel panel-default tutorial-question-container">
-<div data-label="numeric" class="tutorial-question panel-body">
-<div id="numeric-answer_container" class="shiny-html-output"></div>
-<div id="numeric-message_container" class="shiny-html-output"></div>
-<div id="numeric-action_button_container" class="shiny-html-output"></div>
+<div data-label="question_1" class="tutorial-question panel-body">
+<div id="question_1-answer_container" class="shiny-html-output"></div>
+<div id="question_1-message_container" class="shiny-html-output"></div>
+<div id="question_1-action_button_container" class="shiny-html-output"></div>
 <script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
 </div>
 </div>
+</div>
+<div id="section-question-2" class="section level2">
+<h2>Question 2</h2>
 <div class="panel panel-default tutorial-question-container">
-<div data-label="toltest" class="tutorial-question panel-body">
-<div id="toltest-answer_container" class="shiny-html-output"></div>
-<div id="toltest-message_container" class="shiny-html-output"></div>
-<div id="toltest-action_button_container" class="shiny-html-output"></div>
+<div data-label="question_2" class="tutorial-question panel-body">
+<div id="question_2-answer_container" class="shiny-html-output"></div>
+<div id="question_2-message_container" class="shiny-html-output"></div>
+<div id="question_2-action_button_container" class="shiny-html-output"></div>
 <script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
 </div>
 </div>
+</div>
+<div id="section-question-3" class="section level2">
+<h2>Question 3</h2>
 <div class="panel panel-default tutorial-question-container">
-<div data-label="imagetest" class="tutorial-question panel-body">
-<div id="imagetest-answer_container" class="shiny-html-output"></div>
-<div id="imagetest-message_container" class="shiny-html-output"></div>
-<div id="imagetest-action_button_container" class="shiny-html-output"></div>
+<div data-label="question_3" class="tutorial-question panel-body">
+<div id="question_3-answer_container" class="shiny-html-output"></div>
+<div id="question_3-message_container" class="shiny-html-output"></div>
+<div id="question_3-action_button_container" class="shiny-html-output"></div>
 <script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
 </div>
 </div>
+<!-- Last question number: Question 3 -->
 <div class="panel panel-default tutorial-question-container">
 <div data-label="submission" class="tutorial-question panel-body">
 <div id="submission-answer_container" class="shiny-html-output"></div>
@@ -151,8 +163,6 @@ if (window.hljs) {
 </div>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
-
-# Import required libraries
 library(learnr)
 library(dplyr)
 library(tidyr)
@@ -167,6 +177,15 @@ options(tutorial.event_recorder = eventRecorder)
 
 # Set knitr options
 knitr::opts_chunk$set(echo = FALSE)
+
+suppressMessages({
+  library(learnr)
+  library(dplyr)
+  library(tidyr)
+  library(purrr)
+  library(googlesheets4)
+  library(googledrive)
+})
 
 </script>
  
@@ -191,49 +210,22 @@ session$onSessionEnded(function() {
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "multiplechoice", 
-    question = structure("[Question 1] [Points: 1] How long did it take Camden to troubleshoot this when first setting it up?", html = TRUE, class = c("html", 
-    "character")), answers = list(structure(list(id = "lnr_ans_74e5c4e", 
-        option = "30 Minutes", value = "30 Minutes", label = structure("30 Minutes", html = TRUE, class = c("html", 
-        "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_9fb29ae", 
-        option = "1 Hour", value = "1 Hour", label = structure("1 Hour", html = TRUE, class = c("html", 
-        "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_a2c718b", 
-        option = "1.5 Hours", value = "1.5 Hours", label = structure("1.5 Hours", html = TRUE, class = c("html", 
-        "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_db376ab", 
-        option = "2 Hours", value = "2 Hours", label = structure("2 Hours", html = TRUE, class = c("html", 
-        "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-    "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
-    "character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
-    "character"))), messages = list(correct = structure("Correct!", html = TRUE, class = c("html", 
-    "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
-    "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
-    "character")), message = NULL, post_message = NULL), ids = list(
-        answer = "multiplechoice-answer", question = "multiplechoice"), 
-    loading = NULL, random_answer_order = FALSE, allow_retry = FALSE, 
-    seed = 1275960013.90583, options = list()), class = c("learnr_radio", 
-"tutorial_question")), session = session)
-</script>
-
-
-<script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", label = "numeric", question = structure("[Question 2] [Points: 2] What is pi rounded to 2 decimal points?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_2836435", 
-    option = "3", value = 3, label = structure("3", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("Don’t forget to use the decimals argument", html = TRUE, class = c("html", 
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_text", label = "auth", question = structure("[Authentication] Enter your PIN:", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_515ffed", 
+    option = "715641", value = "715641", label = structure("715641", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = structure("Pin Recognized!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_117383a", 
-    option = "3.1", value = 3.1, label = structure("3.1", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("Too few decimals", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a66dd1e", 
-    option = "3.142", value = 3.142, label = structure("3.142", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("Too many decimals", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_852dc72", 
-    option = "3.14", value = 3.14, label = structure("3.14", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_9ee1ea9", 
+    option = "750894", value = "750894", label = structure("750894", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_fe2f7da", 
+    option = "74849", value = "74849", label = structure("74849", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_b806451", 
+    option = "81218", value = "81218", label = structure("81218", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_320702a", 
+    option = "517079", value = "517079", label = structure("517079", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
 "character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
@@ -241,77 +233,82 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", labe
 "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
-    answer = "numeric-answer", question = "numeric"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1523762837.79044, 
-    options = list(min = 3, max = 4, step = 0.01, tolerance = 1.5e-08)), class = c("learnr_numeric", 
+    answer = "auth-answer", question = "auth"), loading = NULL, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1948435119.09269, 
+    options = list(placeholder = "Enter answer here...", trim = TRUE)), class = c("learnr_text", 
 "tutorial_question")), session = session)
 </script>
- 
+
+
 <script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", label = "toltest", question = structure("[Question 3] [Points: 5] What is the approximate population of Mount Vernon?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_7386bc2", 
-    option = "4460", value = 4460, label = structure("4460", html = TRUE, class = c("html", 
-    "character")), correct = TRUE, message = structure("As of 2021, the population of Mount Vernon is 4460.", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "question_1", question = structure("[Question 1] [Points: 1] quuu1", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_568aa8d", 
+    option = "yes", value = "yes", label = structure("yes", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_6bfc608", 
+    option = "no", value = "no", label = structure("no", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e9c31fd", 
+    option = "nay", value = "nay", label = structure("nay", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_6acdea3", 
+    option = "neigh", value = "neigh", label = structure("neigh", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
 "character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
 "character"))), messages = list(correct = structure("Correct!", html = TRUE, class = c("html", 
 "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
-    answer = "toltest-answer", question = "toltest"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = FALSE, seed = 73874559.9655995, 
-    options = list(placeholder = "Hint: The answer is between 4,000 and 5,000", 
-        min = NA, max = NA, step = 10, tolerance = 100)), class = c("learnr_numeric", 
-"tutorial_question")), session = session)
-</script>
-
-
-<script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "imagetest", question = structure("[Question 4] [Points: 1] Which one of these arrows is facing left?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_6d3b7d", 
-    option = "<img src=\"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png\"/>", 
-    value = structure(list(name = "img", attribs = list(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), 
-        children = list()), class = "shiny.tag"), label = structure(list(
-        name = "img", attribs = list(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Small_arrow_pointing_left.svg/440px-Small_arrow_pointing_left.svg.png"), 
-        children = list()), class = "shiny.tag"), correct = TRUE, 
-    message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_192041e", 
-    option = "<img src=\"https://cdn-icons-png.flaticon.com/512/66/66831.png\"/>", 
-    value = structure(list(name = "img", attribs = list(src = "https://cdn-icons-png.flaticon.com/512/66/66831.png"), 
-        children = list()), class = "shiny.tag"), label = structure(list(
-        name = "img", attribs = list(src = "https://cdn-icons-png.flaticon.com/512/66/66831.png"), 
-        children = list()), class = "shiny.tag"), correct = FALSE, 
-    message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_3743dd7", 
-    option = "<img src=\"https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png\"/>", 
-    value = structure(list(name = "img", attribs = list(src = "https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png"), 
-        children = list()), class = "shiny.tag"), label = structure(list(
-        name = "img", attribs = list(src = "https://w7.pngwing.com/pngs/821/97/png-transparent-black-arrow-up-illustration-arrow-desktop-symbol-up-arrow-angle-triangle-sign-thumbnail.png"), 
-        children = list()), class = "shiny.tag"), correct = FALSE, 
-    message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_d89499f", 
-    option = "<img src=\"https://png.pngtree.com/png-vector/20190419/ourmid/pngtree-vector-down-arrow-icon-png-image_956433.jpg\"/>", 
-    value = structure(list(name = "img", attribs = list(src = "https://png.pngtree.com/png-vector/20190419/ourmid/pngtree-vector-down-arrow-icon-png-image_956433.jpg"), 
-        children = list()), class = "shiny.tag"), label = structure(list(
-        name = "img", attribs = list(src = "https://png.pngtree.com/png-vector/20190419/ourmid/pngtree-vector-down-arrow-icon-png-image_956433.jpg"), 
-        children = list()), class = "shiny.tag"), correct = FALSE, 
-    message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
-"character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("Correct!", html = TRUE, class = c("html", 
-"character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), message = NULL, post_message = NULL), ids = list(
-    answer = "imagetest-answer", question = "imagetest"), loading = NULL, 
-    random_answer_order = TRUE, allow_retry = TRUE, seed = 506345139.764215, 
+    answer = "question_1-answer", question = "question_1"), loading = NULL, 
+    random_answer_order = TRUE, allow_retry = TRUE, seed = 1050437087.01085, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "question_2", question = structure("[Question 2] [Points: 1] quuutwuuuu", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_e68d86c", 
+    option = "True", value = "True", label = structure("True", html = TRUE, class = c("html", 
+    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_10beeae", 
+    option = "False", value = "False", label = structure("False", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
+"character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
+"character"))), messages = list(correct = structure("Correct!", html = TRUE, class = c("html", 
+"character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
+"character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
+"character")), message = NULL, post_message = NULL), ids = list(
+    answer = "question_2-answer", question = "question_2"), loading = NULL, 
+    random_answer_order = TRUE, allow_retry = TRUE, seed = 674879934.685735, 
+    options = list()), class = c("learnr_radio", "tutorial_question"
+)), session = session)
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_numeric", label = "question_3", 
+    question = structure("[Question 3] [Points: 1] quuutwuuuu", html = TRUE, class = c("html", 
+    "character")), answers = list(structure(list(id = "lnr_ans_1e130e6", 
+        option = "12", value = 12, label = structure("12", html = TRUE, class = c("html", 
+        "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+    "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
+    "character")), try_again = structure("<span data-i18n=\"button.questiontryagain\">Try Again<\u002fspan>", html = TRUE, class = c("html", 
+    "character"))), messages = list(correct = structure("Correct!", html = TRUE, class = c("html", 
+    "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
+    "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
+    "character")), message = NULL, post_message = NULL), ids = list(
+        answer = "question_3-answer", question = "question_3"), 
+    loading = NULL, random_answer_order = FALSE, allow_retry = TRUE, 
+    seed = 132407858.938343, options = list(min = NA, max = NA, 
+        step = NA, tolerance = 0.1)), class = c("learnr_numeric", 
+"tutorial_question")), session = session)
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "submission", question = structure("Submit Assignment?", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_5df61db", 
+"character")), answers = list(structure(list(id = "lnr_ans_c74ff96", 
     option = "Yes", value = "Yes", label = structure("Yes", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("<span data-i18n=\"button.questionsubmit\">Submit Answer<\u002fspan>", html = TRUE, class = c("html", 
@@ -321,7 +318,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "submission-answer", question = "submission"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = FALSE, seed = 409670310.809232, 
+    random_answer_order = FALSE, allow_retry = FALSE, seed = 643446373.700372, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
@@ -336,6 +333,7 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63]}},"value":[{"type":"character","attributes":{},"value":["backports","base","bslib","cachem","cellranger","checkmate","cli","commonmark","compiler","curl","datasets","digest","dplyr","ellipsis","evaluate","fansi","fastmap","fontawesome","fs","gargle","generics","glue","googledrive","googlesheets4","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","learnr","lifecycle","magrittr","markdown","methods","mime","pillar","pkgconfig","promises","purrr","R6","Rcpp","rlang","rmarkdown","rprojroot","rstudioapi","sass","shiny","stats","tibble","tidyr","tidyselect","tools","utf8","utils","vctrs","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.4.1","4.2.2","0.4.2","1.0.8","1.1.0","2.2.0","3.6.1","1.9.0","4.2.2","5.0.0","4.2.2","0.6.31","1.1.2","0.3.2","0.21","1.0.4","1.1.1","0.5.1","1.6.2","1.4.0","0.1.3","1.6.2","2.1.0","1.1.0","4.2.2","4.2.2","0.5.5","1.6.2","1.6.11","0.1.4","1.8.4","1.42","1.3.1","0.11.3","1.0.3","2.0.3","1.7","4.2.2","0.12","1.9.0","2.0.3","1.2.0.1","1.0.1","2.5.1","1.0.10","1.1.1","2.21","2.0.3","0.14","0.4.6","1.7.4","4.2.2","3.2.1","1.3.0","1.2.0","4.2.2","1.2.3","4.2.2","0.6.2","2.5.0","0.39","1.8-4","2.3.7"]}]}]}
 </script>
 <!--/html_preserve-->
+</div>
 
 </article> <!-- topics -->
 
@@ -346,7 +344,6 @@ learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label 
 
 <!-- begin doc-metadata -->
 <div id="doc-metadata">
-<h1 class="title toc-ignore" style="display:none;">Learnr Test</h1>
 </div>
 <!-- end doc-metadata -->
 
