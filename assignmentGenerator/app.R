@@ -9,21 +9,24 @@ ui <- fluidPage(
     sidebarPanel(
       textInput('fileName', 'Enter Rmd file name', value = "Assignment.Rmd"),
       uiOutput("fileFound"),
-      actionButton("newFileButton", "Create New File"),
-      checkboxInput("includeAuth", "Include Authentication Block", FALSE),
+      checkboxInput("includeAuth", "Include Authentication Block", TRUE),
       conditionalPanel(
         condition = "input.includeAuth == true",
         textInput('authFile', 'Enter CSV file name', value = "pins.csv"),
         uiOutput("authFileFound"),
       ),
+      actionButton("newFileButton", "Create New File"),
       numericInput('points', 'Points', value = 1, min = 1),
       textInput('query', 'Question Query'),
       radioButtons('questionType', 'Question type',
                    choices = c('Multiple Choice' = 1, 'Numeric' = 2)),
       conditionalPanel(
         condition = "input.questionType == 1",
-        numericInput('numCorrect', 'Number of correct answers', value = 1, min = 1),
-        numericInput('numIncorrect', 'Number of incorrect answers', value = 1, min = 1),
+        sliderInput('numCorrect', 'Number of correct answers', min = 1, max = 10, value = 1),
+        tags$span("Multiple correct answers create a checkbox question.", 
+                  style = "font-size: 12px; padding-left: 5px;", 
+                  title = "Multiple correct answers create a checkbox question."),
+        sliderInput('numIncorrect', 'Number of incorrect answers', min = 1, max = 10, value = 3),
         uiOutput("correctAnswers"),
         uiOutput("incorrectAnswers")
       ),
@@ -135,8 +138,23 @@ knitr::opts_chunk$set(echo = FALSE)
       if(input$includeAuth) {
         auth_file <- paste0("./Pins/", input$authFile)
         if (file.exists(auth_file)) {
-          auth_chunk <- readLines(auth_file)
-          cat(file=fileConn, "\n", auth_chunk, "\n")
+          # Read the pin file
+          pin_df <- read.csv(auth_file)
+          # Extract the pin column
+          pin_vec <- pin_df$PIN
+          # Generate the answer lines
+          pin_answers <- paste0("answer('", pin_vec, "', correct = TRUE)", collapse = ",\n    ")
+          # Create the authentication block
+          authentication_block <- paste0(
+            "\n\n```{r auth}\n",
+            "question_text(\"Enter your PIN:\",\n",
+            "    ", pin_answers, ",\n",
+            "    allow_retry = TRUE,\n",
+            "    tolerance = 0)\n",
+            "```\n"
+          )
+          # Write the authentication block to the file
+          cat(file=fileConn, authentication_block, "\n")
         } else {
           showNotification("Authentication CSV file does not exist.", type = "warning")
         }
