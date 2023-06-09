@@ -13,7 +13,7 @@ df <- data.frame(
 pin <- NA
 
 # Function to record tutorial events
-eventRecorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
+eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
   
   # Authenticate with Google Sheets
   gs4_auth(
@@ -44,6 +44,16 @@ eventRecorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
       points <- ifelse(grepl("\\[Points: \\d+\\]", data$question), 
                        as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
       
+      # Check if there's already a row with the same pin and question_num
+      previous_rows <- df[df$pin == pin & gsub("\\..*", "", df$question_num) == paste0("Q", question_num), ]
+      if (nrow(previous_rows) > 0) {
+        attempt_num <- max(as.numeric(gsub(".*\\.(\\d+)$", "\\1", previous_rows$question_num))) + 1
+        # Adjust points for retries
+        points <- points - 0.5 * (attempt_num - 1)
+      } else {
+        attempt_num <- 1
+      }
+      
       # Extract problem without [Question X] and [Points: X]
       problem <- gsub("\\[Question \\d+\\]|\\[Points: \\d+\\]", "", data$question)
       
@@ -54,7 +64,7 @@ eventRecorder <- function(tutorial_id, tutorial_version, user_id, event, data) {
         points = points,
         answer = data$answer, 
         correct = ifelse(data$correct, TRUE, FALSE),
-        question_num = paste0("Q", question_num),
+        question_num = paste0("Q", question_num, ".", attempt_num),
         stringsAsFactors = FALSE
       )
       
