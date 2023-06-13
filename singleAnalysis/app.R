@@ -121,13 +121,19 @@ server <- function(input, output) {
     grading <- grading %>%
       mutate(percentage = (total_earned / total_possible) * 100)
     
-    # Assign letter grade
     grading <- grading %>%
       mutate(letter_grade = case_when(
         percentage >= 93 ~ "A",
-        percentage >= 80 ~ "B",
-        percentage >= 70 ~ "C",
-        percentage >= 60 ~ "D",
+        percentage >= 90 ~ "A-",
+        percentage >= 87 ~ "B+",
+        percentage >= 83 ~ "B",
+        percentage >= 80 ~ "B-",
+        percentage >= 77 ~ "C+",
+        percentage >= 73 ~ "C",
+        percentage >= 70 ~ "C-",
+        percentage >= 67 ~ "D+",
+        percentage >= 63 ~ "D",
+        percentage >= 60 ~ "D-",
         TRUE ~ "F"
       ))
     
@@ -157,6 +163,16 @@ server <- function(input, output) {
   output$user_plot <- renderPlot({
     user_data <- analysis()$user_data
     
+    # Calculate total correct answers per user
+    correct_totals <- user_data %>% 
+      filter(correct == TRUE) %>%
+      group_by(user_id) %>%
+      summarise(total_correct = sum(n)) %>%
+      arrange(total_correct)
+    
+    # Reorder user factor levels based on total correct
+    user_data$user_id <- factor(user_data$user_id, levels = correct_totals$user_id)
+    
     user_data <- user_data %>% 
       arrange(user_id, desc(correct)) %>%
       group_by(user_id) %>%
@@ -173,6 +189,16 @@ server <- function(input, output) {
   output$question_plot <- renderPlot({
     question_data <- analysis()$question_data
     
+    # Calculate total correct answers per question
+    correct_totals <- question_data %>% 
+      filter(correct == TRUE) %>%
+      group_by(question) %>%
+      summarise(total_correct = sum(n)) %>%
+      arrange(total_correct)
+    
+    # Reorder question factor levels based on total correct
+    question_data$question <- factor(question_data$question, levels = correct_totals$question)
+    
     question_data <- question_data %>% 
       arrange(question, desc(correct)) %>%
       group_by(question) %>%
@@ -186,25 +212,38 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
   
-  
-  output$question_attempt_plot <- renderPlot({
-    question_attempt_data <- analysis()$question_attempt_data
-    # Bar plot of average attempts by question
-    ggplot(question_attempt_data, aes(x = question, y = avg_attempts)) +
-      geom_bar(stat = 'identity', fill = 'steelblue') +
-      geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
-      labs(x = "Question", y = "Average Attempts") +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  })
-  
   output$user_attempt_plot <- renderPlot({
     user_attempt_data <- analysis()$user_attempt_data
-    # Bar plot of average attempts by user
+    
+    # Sort data by average attempts
+    user_attempt_data <- user_attempt_data %>%
+      arrange(avg_attempts)
+    
+    # Reorder factor levels
+    user_attempt_data$user_id <- factor(user_attempt_data$user_id, levels = user_attempt_data$user_id)
+    
     ggplot(user_attempt_data, aes(x = user_id, y = avg_attempts)) +
       geom_bar(stat = 'identity', fill = 'steelblue') +
       geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
       labs(x = "User ID", y = "Average Attempts") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+  
+  output$question_attempt_plot <- renderPlot({
+    question_attempt_data <- analysis()$question_attempt_data
+    
+    # Sort data by average attempts
+    question_attempt_data <- question_attempt_data %>%
+      arrange(avg_attempts)
+    
+    # Reorder factor levels
+    question_attempt_data$question <- factor(question_attempt_data$question, levels = question_attempt_data$question)
+    
+    ggplot(question_attempt_data, aes(x = question, y = avg_attempts)) +
+      geom_bar(stat = 'identity', fill = 'steelblue') +
+      geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
+      labs(x = "Question", y = "Average Attempts") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
