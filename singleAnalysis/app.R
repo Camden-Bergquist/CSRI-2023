@@ -24,8 +24,14 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("Data", tableOutput("data")),
-        tabPanel("Submissions by User", plotOutput("user_plot")),
-        tabPanel("Submissions by Question", plotOutput("question_plot")),
+        tabPanel("Submissions by User", 
+                 plotOutput("user_plot"),
+                 plotOutput("user_attempt_plot")
+                 ),
+        tabPanel("Submissions by Question", 
+                 plotOutput("question_plot"), 
+                 plotOutput("question_attempt_plot")
+                 ),
         tabPanel("Grades", tableOutput("grades"))
       )
     )
@@ -129,7 +135,23 @@ server <- function(input, output) {
     grading <- grading %>%
       arrange(desc(percentage))
     
-    return(list(user_data = user_data, question_data = question_data, grading = grading))
+    # Calculate the maximum attempt number for each user and question, then average by question
+    question_attempt_data <- data_long %>%
+      mutate(attempt_number = as.numeric(str_extract(question, "\\d+$"))) %>%
+      group_by(user_id, question = str_extract(question, "^Q\\d+")) %>%
+      summarise(max_attempt = max(attempt_number)) %>%
+      group_by(question) %>%
+      summarise(avg_attempts = mean(max_attempt))
+    
+    # Calculate the maximum attempt number for each user and question, then average by user
+    user_attempt_data <- data_long %>%
+      mutate(attempt_number = as.numeric(str_extract(question, "\\d+$"))) %>%
+      group_by(user_id, question = str_extract(question, "^Q\\d+")) %>%
+      summarise(max_attempt = max(attempt_number)) %>%
+      group_by(user_id) %>%
+      summarise(avg_attempts = mean(max_attempt))
+    
+    return(list(user_data = user_data, question_data = question_data, grading = grading, question_attempt_data = question_attempt_data, user_attempt_data = user_attempt_data))
   })
   
   
@@ -153,6 +175,25 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
   
+    output$question_attempt_plot <- renderPlot({
+    question_attempt_data <- analysis()$question_attempt_data
+    # Bar plot of average attempts by question
+    ggplot(question_attempt_data, aes(x = question, y = avg_attempts)) +
+      geom_bar(stat = 'identity', fill = 'steelblue') +
+      labs(x = "Question", y = "Average Attempts") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+    
+    output$user_attempt_plot <- renderPlot({
+      user_attempt_data <- analysis()$user_attempt_data
+      # Bar plot of average attempts by user
+      ggplot(user_attempt_data, aes(x = user_id, y = avg_attempts)) +
+        geom_bar(stat = 'identity', fill = 'steelblue') +
+        labs(x = "User ID", y = "Average Attempts") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    })
   
   output$grades <- renderTable({
     grading <- analysis()$grading
