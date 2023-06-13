@@ -94,7 +94,7 @@ server <- function(input, output) {
     
     # Aggregate data by question and correct
     question_data <- data_long %>%
-      group_by(question, correct) %>%
+      group_by(question = str_extract(question, "^Q\\d+"), correct) %>%
       summarise(n = n(), .groups = 'drop')
     
     # Calculate total points earned by each student
@@ -152,6 +152,7 @@ server <- function(input, output) {
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
+  
   
   output$grades <- renderTable({
     grading <- analysis()$grading
