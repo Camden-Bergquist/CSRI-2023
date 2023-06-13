@@ -117,7 +117,7 @@ output: learnr::tutorial
 runtime: shiny_prerendered
 ---
 
-```{r setup}
+```{r setup, include = FALSE}
 library(learnr)
 library(dplyr)
 library(tidyr)
@@ -149,7 +149,7 @@ knitr::opts_chunk$set(echo = FALSE)
             "\n\n```{r auth}\n",
             "question_text(\"[Authentication] Enter your PIN:\",\n",
             "    ", pin_answers, ",\n",
-            "    allow_retry = TRUE,\n",
+            "    allow_retry = TRUE)\n",
             "```\n"
           )
           # Write the authentication block to the file

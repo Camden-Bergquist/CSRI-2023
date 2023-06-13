@@ -34,6 +34,10 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
+  observeEvent(input$run_analysis, {
+    showNotification("Done!", type = "message")
+  })
+  
   data <- reactive({
     req(input$file1)
     inFile <- input$file1
@@ -75,6 +79,13 @@ server <- function(input, output) {
     # Convert correct column to logical and points to integer
     data_long$correct <- as.logical(data_long$correct)
     data_long$points <- as.numeric(data_long$points)
+    
+    # Filter out first correct attempts
+    data_long <- data_long %>%
+      group_by(user_id, str_extract(question, "^Q\\d+")) %>%
+      arrange(as.numeric(str_extract(question, "\\d+$"))) %>%
+      filter(if (any(correct == TRUE)) correct == TRUE else TRUE) %>%
+      slice_min(order_by = as.numeric(str_extract(question, "\\d+$")))
     
     # Aggregate data by user_id and correct
     user_data <- data_long %>%
@@ -120,6 +131,7 @@ server <- function(input, output) {
     
     return(list(user_data = user_data, question_data = question_data, grading = grading))
   })
+  
   
   output$user_plot <- renderPlot({
     user_data <- analysis()$user_data
