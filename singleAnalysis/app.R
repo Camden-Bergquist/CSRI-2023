@@ -154,12 +154,17 @@ server <- function(input, output) {
     return(list(user_data = user_data, question_data = question_data, grading = grading, question_attempt_data = question_attempt_data, user_attempt_data = user_attempt_data))
   })
   
-  
   output$user_plot <- renderPlot({
     user_data <- analysis()$user_data
-    # Bar plot of submissions by user, colored by whether they are correct or not
+    
+    user_data <- user_data %>% 
+      arrange(user_id, desc(correct)) %>%
+      group_by(user_id) %>%
+      mutate(n_cumsum = cumsum(n))
+    
     ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
       geom_bar(stat = 'identity', position = 'stack') +
+      geom_text(aes(y = n_cumsum, label = n), color = "white", size = 6, vjust = 1.2) +
       labs(x = "User ID", y = "Count", fill = "Correctness") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -167,33 +172,42 @@ server <- function(input, output) {
   
   output$question_plot <- renderPlot({
     question_data <- analysis()$question_data
-    # Bar plot of submissions by question, colored by whether they are correct or not
+    
+    question_data <- question_data %>% 
+      arrange(question, desc(correct)) %>%
+      group_by(question) %>%
+      mutate(n_cumsum = cumsum(n))
+    
     ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
       geom_bar(stat = 'identity', position = 'stack') +
+      geom_text(aes(y = n_cumsum, label = n), color = "white", size = 6, vjust = 1.2) +
       labs(x = "Question", y = "Count", fill = "Correctness") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
   
-    output$question_attempt_plot <- renderPlot({
+  
+  output$question_attempt_plot <- renderPlot({
     question_attempt_data <- analysis()$question_attempt_data
     # Bar plot of average attempts by question
     ggplot(question_attempt_data, aes(x = question, y = avg_attempts)) +
       geom_bar(stat = 'identity', fill = 'steelblue') +
+      geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
       labs(x = "Question", y = "Average Attempts") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
-    
-    output$user_attempt_plot <- renderPlot({
-      user_attempt_data <- analysis()$user_attempt_data
-      # Bar plot of average attempts by user
-      ggplot(user_attempt_data, aes(x = user_id, y = avg_attempts)) +
-        geom_bar(stat = 'identity', fill = 'steelblue') +
-        labs(x = "User ID", y = "Average Attempts") +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    })
+  
+  output$user_attempt_plot <- renderPlot({
+    user_attempt_data <- analysis()$user_attempt_data
+    # Bar plot of average attempts by user
+    ggplot(user_attempt_data, aes(x = user_id, y = avg_attempts)) +
+      geom_bar(stat = 'identity', fill = 'steelblue') +
+      geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
+      labs(x = "User ID", y = "Average Attempts") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
   
   output$grades <- renderTable({
     grading <- analysis()$grading
