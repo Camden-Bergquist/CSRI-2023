@@ -27,11 +27,11 @@ ui <- fluidPage(
         tabPanel("Submissions by User", 
                  plotOutput("user_plot"),
                  plotOutput("user_attempt_plot")
-                 ),
+        ),
         tabPanel("Submissions by Question", 
                  plotOutput("question_plot"), 
                  plotOutput("question_attempt_plot")
-                 ),
+        ),
         tabPanel("Grades", tableOutput("grades"))
       )
     )
@@ -109,13 +109,17 @@ server <- function(input, output) {
       group_by(user_id) %>%
       summarise(total_earned = sum(points, na.rm = TRUE))
     
-    # Calculate total possible points for the test
+    # Calculate total possible points for the assignment per student and find the maximum
     total_points_possible <- data_long %>%
       group_by(user_id) %>%
-      summarise(total_possible = sum(points, na.rm = TRUE))
+      summarise(total_possible = sum(points, na.rm = TRUE)) %>%
+      summarise(max_total_possible = max(total_possible, na.rm = TRUE))
     
-    # Join total_points_earned and total_points_possible
-    grading <- full_join(total_points_earned, total_points_possible, by = "user_id")
+    # Assign the maximum total_possible to each student
+    total_points_possible_per_student <- data.frame(user_id = unique(data_long$user_id), total_possible = total_points_possible$max_total_possible)
+    
+    # Join total_points_earned and total_points_possible_per_student
+    grading <- full_join(total_points_earned, total_points_possible_per_student, by = "user_id")
     
     # Calculate percentage of points earned
     grading <- grading %>%
