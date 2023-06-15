@@ -8,7 +8,17 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      fileInput('file1', 'Choose CSV File',
+      fileInput('homework_file', 'Choose CSV File',
+                accept = c(
+                  'text/csv',
+                  'text/comma-separated-values',
+                  'text/tab-separated-values',
+                  'text/plain',
+                  '.csv',
+                  '.tsv'
+                )
+      ),
+      fileInput('pin_file', 'Choose CSV File',
                 accept = c(
                   'text/csv',
                   'text/comma-separated-values',
@@ -44,12 +54,30 @@ server <- function(input, output) {
     showNotification("Done!", type = "message")
   })
   
+  pin_data <- reactive({
+    req(input$pin_file)
+    inFile <- input$pin_file
+    df_pin <- read.csv(inFile$datapath, stringsAsFactors = FALSE)
+    df_pin$name <- paste(df_pin$first_name, substr(df_pin$last_name, 1, 1), sep = " ")
+    return(df_pin)
+  })
+  
   data <- reactive({
-    req(input$file1)
-    inFile <- input$file1
+    req(input$homework_file)
+    inFile <- input$homework_file
     df <- read.csv(inFile$datapath, stringsAsFactors = FALSE)
     answer_cols <- grep("_answer$", names(df), value = TRUE)
     df[answer_cols] <- lapply(df[answer_cols], as.character)
+    
+    # Join the data from the homework file and the pin file
+    df <- left_join(df, pin_data(), by = c("pin" = "PIN"))
+    
+    # Drop the 'pin', 'first_name', and 'last_name' columns and keep the 'name' column
+    df <- df %>% select(-pin, -first_name, -last_name)
+    
+    # Move 'name' column to the first position
+    df <- df %>% select(name, everything())
+    
     return(df)
   })
   
@@ -62,19 +90,19 @@ server <- function(input, output) {
     
     # Separate columns into problems, answers, correctness and points
     problems <- df %>%
-      select(user_id = pin, starts_with("Q") & ends_with("_problem")) %>%
+      select(user_id = name, starts_with("Q") & ends_with("_problem")) %>%
       pivot_longer(-user_id, names_to = "question", values_to = "problem", names_pattern = "(Q\\d+\\.\\d+)_problem")
     
     answers <- df %>%
-      select(user_id = pin, starts_with("Q") & ends_with("_answer")) %>%
+      select(user_id = name, starts_with("Q") & ends_with("_answer")) %>%
       pivot_longer(-user_id, names_to = "question", values_to = "answer", names_pattern = "(Q\\d+\\.\\d+)_answer")
     
     correctness <- df %>%
-      select(user_id = pin, starts_with("Q") & ends_with("_correct")) %>%
+      select(user_id = name, starts_with("Q") & ends_with("_correct")) %>%
       pivot_longer(-user_id, names_to = "question", values_to = "correct", names_pattern = "(Q\\d+\\.\\d+)_correct")
     
     points <- df %>%
-      select(user_id = pin, starts_with("Q") & ends_with("_points")) %>%
+      select(user_id = name, starts_with("Q") & ends_with("_points")) %>%
       pivot_longer(-user_id, names_to = "question", values_to = "points", names_pattern = "(Q\\d+\\.\\d+)_points")
     
     # Combine reshaped data
