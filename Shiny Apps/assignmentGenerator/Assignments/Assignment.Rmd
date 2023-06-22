@@ -1,0 +1,50 @@
+---
+title: ""
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(googlesheets4)
+library(googledrive)
+
+# Set knitr options
+knitr::opts_chunk$set(echo = FALSE)
+``` 
+
+```{r question_1}
+question("[Question 1] True or False: Cornell College resides in Mount Vernon, Iowa",
+    answer('True', correct = TRUE),
+    answer('False', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+
+```{r question_2}
+question_numeric("[Question 2] What's the approximate population of Mount Vernon?",
+    answer(4460, correct = TRUE),
+    allow_retry = TRUE,
+    tolerance = 100)
+```
+
+
+
+```{r question_1}
+question("[Question 1] [Points: 2] True or False: Cornell College resides in Mount Vernon, Iowa",
+    answer('True', correct = TRUE),
+    answer('False', correct = TRUE),
+    answer('NA', correct = FALSE),
+    answer('False', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+<!-- Last question number: Question 1 --> 
+```{r submission}
+question("Submit Assignment?",
+       answer("Yes", correct = TRUE)
+       )
+``` 

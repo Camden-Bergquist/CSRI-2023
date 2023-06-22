@@ -1,0 +1,67 @@
+---
+title: ""
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(googlesheets4)
+library(googledrive)
+
+source("~/CSRI-2023/Scripts/EventRecorder.R")
+
+# REQUIRED: Set the global option to use our event recorder function.
+options(tutorial.event_recorder = eventRecorder)
+
+# Set knitr options
+knitr::opts_chunk$set(echo = FALSE)
+``` 
+
+
+
+```{r question_1}
+question("[Question 1] [Points: 3] How many thumbs does Professor George have?",
+    answer('2', correct = TRUE),
+    answer('1', correct = TRUE),
+    answer('3', correct = TRUE),
+    answer('NA', correct = FALSE),
+    answer('3', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+
+
+
+```{r question_2}
+question("[Question 2] [Points: 3] How many thumbs does Professor George have?",
+    answer('2', correct = TRUE),
+    answer('1', correct = TRUE),
+    answer('3', correct = TRUE),
+    answer('NA', correct = FALSE),
+    answer('3', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+
+
+
+```{r question_3}
+question("[Question 3] [Points: 3] How many thumbs does Professor George have?",
+    answer('2', correct = TRUE),
+    answer('1', correct = TRUE),
+    answer('3', correct = TRUE),
+    answer('NA', correct = FALSE),
+    answer('3', correct = FALSE),
+    allow_retry = TRUE,
+    random_answer_order = TRUE)
+```
+<!-- Last question number: Question 3 --> 
+```{r submission}
+question("Submit Assignment?",
+       answer("Yes", correct = TRUE)
+       )
+``` 
