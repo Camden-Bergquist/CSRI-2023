@@ -12,13 +12,11 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("Data", tableOutput("data")),
-        tabPanel("Grades by Assignment", 
-                 plotOutput("user_plot"),
-                 plotOutput("user_attempt_plot")
+        tabPanel("Average Assignment Grades", 
+                 plotOutput("average_plot")
         ),
         tabPanel("Assignments by Student", 
-                 plotOutput("question_plot"), 
-                 plotOutput("question_attempt_plot")
+                 plotOutput("student_plot")
         ),
         tabPanel("Grades", tableOutput("grades"))
       )
@@ -69,9 +67,9 @@ server <- function(input, output) {
       summarize(across(all_of(firstAttemptCols), sum, na.rm = TRUE), .groups = "drop") %>%
       mutate(total = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
       group_by(assignment) %>%
-      summarize(max_total = max(total, na.rm = TRUE), .groups = "drop")
+      summarize(total = max(total, na.rm = TRUE), .groups = "drop")
     
-    # Add the max_total column
+    # Add the total column
     newData <- left_join(newData, userMaxSum, by = "assignment")
     
     return(newData)
@@ -80,6 +78,39 @@ server <- function(input, output) {
   output$grades <- renderTable({
     req(data())
     data()
+  })
+  
+  output$average_plot <- renderPlot({
+    req(data())
+    avg_score_data <- data() %>%
+      pivot_longer(cols = -c(assignment, total), names_to = "pin", values_to = "score") %>%
+      group_by(assignment) %>%
+      summarize(average_score = mean(score, na.rm = TRUE), 
+                total = first(total), 
+                .groups = "drop") %>%
+      mutate(percentage = (average_score/total) * 100)
+    
+    ggplot(avg_score_data, aes(x = assignment, y = percentage, fill = assignment)) +
+      geom_bar(stat = "identity") +
+      labs(x = "Assignment", y = "Average Score (%)") +
+      theme_minimal()
+  })
+  
+  output$student_plot <- renderPlot({
+    req(data())
+    student_avg_score_data <- data() %>%
+      pivot_longer(cols = -c(assignment, total), names_to = "pin", values_to = "score") %>%
+      group_by(pin) %>%
+      summarize(average_score = sum(score, na.rm = TRUE), 
+                total = sum(total), 
+                .groups = "drop") %>%
+      mutate(percentage = (average_score/total) * 100)
+    
+    ggplot(student_avg_score_data, aes(x = pin, y = percentage, fill = pin)) +
+      geom_bar(stat = "identity") +
+      labs(x = "Student", y = "Average Score (%)") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1))
   })
   
 }
