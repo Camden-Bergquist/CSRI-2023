@@ -14,7 +14,7 @@ library(purrr)
 library(googlesheets4)
 library(googledrive)
 
-source("~/CSRI-2023/Scripts/EventRecorder.R")
+source("~/CSRI-2023/Scripts/eventRecorderGoogle.R")
 
 # REQUIRED: Set the global option to use our event recorder function.
 options(tutorial.event_recorder = eventRecorder)
