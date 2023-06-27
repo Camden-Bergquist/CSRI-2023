@@ -1,4 +1,4 @@
-# Initialize an empty data frame to record information.
+# Initialize an empty data frame to record event information.
 df <- data.frame(
   pin = character(),
   problem = character(),
