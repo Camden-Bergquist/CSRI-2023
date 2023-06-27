@@ -32,13 +32,9 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
   # This 'if' condition filters incoming events. The goal is to only process 'exercise_submission' and 'question_submission' events,
   # as these contain meaningful user data. All other event types aren't useful for the current purposes and are ignored.
   if (event %in% c("exercise_submission", "question_submission")) {
-    
-    # The following condition checks for the authentication question. The user's submitted pin
-    # is saved for later use to identify which user submitted the upcoming tutorial events.
-    # For each non-authentication and non-submission question, data is extracted and stored.
-    if (grepl("\\[Authentication\\]", data$question)) {
-      pin <<- data$answer
-    } else if (data$question != "Submit Assignment?") {  # Ignore 'Submit Assignment?' question since it carries no important info.
+
+    # For each non-submission question, data is extracted and stored.
+    if (data$question != "[Enter PIN] Submit Assignment?") {  # Ignore 'Submit Assignment?' question since it carries no important info.
       
       # Extract question number and points from the regex in the question title.
       question_num <- ifelse(grepl("\\[Question \\d+\\]", data$question), 
@@ -75,7 +71,10 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
     }
     
     # In reaction to the submission question, the function transforms the data and writes it to a Google Sheet.
-    if(data$question == "Submit Assignment?") {
+    if(data$question == "[Enter PIN] Submit Assignment?" && data$correct == TRUE) {
+      
+      pin <<- data$answer
+      df$pin <<- pin
       
       # Reshape/pivot.
       df_long <- df %>% 

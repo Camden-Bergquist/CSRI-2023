@@ -1,4 +1,4 @@
-# Initialize an empty data frame to record information.
+# Initialize an empty data frame to record event information.
 df <- data.frame(
   pin = character(),
   problem = character(),
@@ -21,12 +21,8 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
   # as these contain meaningful user data. All other event types aren't useful for the current purposes and are ignored.
   if (event %in% c("exercise_submission", "question_submission")) {
     
-    # The following condition checks for the authentication question. The user's submitted pin
-    # is saved for later use to identify which user submitted the upcoming tutorial events.
-    # For each non-authentication and non-submission question, data is extracted and stored.
-    if (grepl("\\[Authentication\\]", data$question)) {
-      pin <- data$answer
-    } else if (data$question != "Submit Assignment?") {  # Ignore 'Submit Assignment?' question since it carries no important info.
+    # For each non-submission question, data is extracted and stored.
+    if (data$question != "[Enter PIN] Submit Assignment?") {  # Ignore 'Submit Assignment?' question since it carries no important info.
       
       # Extract question number and points from the regex in the question title.
       question_num <- ifelse(grepl("\\[Question \\d+\\]", data$question), 
@@ -36,9 +32,9 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
                        as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
       
       # To account for multiple attempts, check if there's already a row with a given question's identifiers.
-      previous_rows <- df[df$pin == pin & gsub("\\..*", "", df$question_num) == paste0("Q", question_num), ]
+      previous_rows <- df[gsub("\\..*", "", df$question_num) == paste0("Q", question_num), ]
       if (nrow(previous_rows) > 0) {
-        attempt_num <- max(as.numeric(gsub(".*\\.(\\d+)$", "\\1", previous_rows$question_num))) + 1
+        attempt_num <- max(as.numeric(gsub(".*\\.(\\d+)$", "\\1", previous_rows$question_num)), na.rm = TRUE) + 1
         # For each attempt past the first, deduct half a point.
         points <- points - 0.5 * (attempt_num - 1)
       } else {
@@ -59,11 +55,14 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
         stringsAsFactors = FALSE
       )
       
-      df <- rbind(df, new_row)
+      df <<- rbind(df, new_row)
     }
     
     # In reaction to the submission question, the function transforms the data and writes it to a CSV file.
-    if(data$question == "Submit Assignment?") {
+    if(data$question == "[Enter PIN] Submit Assignment?" && data$correct == TRUE) {
+      
+      pin <<- data$answer
+      df$pin <<- pin
       
       # Reshape/pivot.
       df_long <- df %>% 
@@ -78,18 +77,13 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
       
       df_wide <- df_wide[, col_order]
       
-      # Print data frame for debugging.
-      print(df_wide)
-      
-      # Writing the reshaped data frame to a csv file in ./data directory.
-      file_path <- "./data/logfile.csv"
-      
-      if (file.exists(file_path)) {
-        # If the file already exists, append the data without the header.
-        write.csv(df_wide, file = file_path, row.names = FALSE, append = TRUE)
+      # Check if the CSV file exists. If it does, append the reshaped data frame to it. 
+      # If it doesn't, write the reshaped data frame to a new CSV file.
+      csv_file_path <- "./data/logfile.csv"
+      if (file.exists(csv_file_path)) {
+        write.table(df_wide, file = csv_file_path, sep = ",", append = TRUE, row.names = FALSE, col.names = FALSE)
       } else {
-        # If the file doesn't exist, create a new one and include a header.
-        write.csv(df_wide, file = file_path, row.names = FALSE)
+        write.table(df_wide, file = csv_file_path, sep = ",", append = FALSE, row.names = FALSE, col.names = TRUE)
       }
     }
   }
