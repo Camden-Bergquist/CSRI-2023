@@ -48,9 +48,9 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
                        as.integer(gsub(".*\\[Points: (\\d+)\\].*", "\\1", data$question)), 1)
       
       # To account for multiple attempts, check if there's already a row with a given question's identifiers.
-      previous_rows <- df[df$pin == pin & gsub("\\..*", "", df$question_num) == paste0("Q", question_num), ]
+      previous_rows <- df[gsub("\\..*", "", df$question_num) == paste0("Q", question_num), ]
       if (nrow(previous_rows) > 0) {
-        attempt_num <- max(as.numeric(gsub(".*\\.(\\d+)$", "\\1", previous_rows$question_num))) + 1
+        attempt_num <- max(as.numeric(gsub(".*\\.(\\d+)$", "\\1", previous_rows$question_num)), na.rm = TRUE) + 1
         # For each attempt past the first, deduct half a point.
         points <- points - 0.5 * (attempt_num - 1)
       } else {
