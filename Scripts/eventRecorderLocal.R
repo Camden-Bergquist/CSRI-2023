@@ -58,6 +58,7 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
       df <<- rbind(df, new_row)
     }
     
+    
     # In reaction to the submission question, the function transforms the data and writes it to a CSV file.
     if(data$question == "[Enter PIN] Submit Assignment?" && data$correct == TRUE) {
       
@@ -77,13 +78,30 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
       
       df_wide <- df_wide[, col_order]
       
-      # Check if the CSV file exists. If it does, append the reshaped data frame to it. 
+      # Check if the CSV file exists. If it does, append the reshaped data frame to it.
       # If it doesn't, write the reshaped data frame to a new CSV file.
       csv_file_path <- "./data/logfile.csv"
       if (file.exists(csv_file_path)) {
-        write.table(df_wide, file = csv_file_path, sep = ",", append = TRUE, row.names = FALSE, col.names = FALSE)
+        existing_data <- read.csv(csv_file_path, stringsAsFactors = FALSE)
+        
+        # Convert all columns in 'existing_data' to character.
+        existing_data[] <- lapply(existing_data, as.character)
+        
+        # Convert all columns in 'df_wide' to character.
+        df_wide[] <- lapply(df_wide, as.character)
+        
+        # Check if a row with the current pin already exists in the CSV file.
+        if (!any(existing_data$pin == pin)) {
+          # If a row with the current pin does not exist, append the new data.
+          
+          # Combine existing data with the new row.
+          combined_data <- dplyr::bind_rows(existing_data, df_wide)
+          
+          # Write the combined data back to the CSV file.
+          write.table(combined_data, file = csv_file_path, sep = ",", row.names = FALSE, col.names = TRUE)
+        }
       } else {
-        write.table(df_wide, file = csv_file_path, sep = ",", append = FALSE, row.names = FALSE, col.names = TRUE)
+        write.table(df_wide, file = csv_file_path, sep = ",", row.names = FALSE, col.names = TRUE)
       }
     }
   }
