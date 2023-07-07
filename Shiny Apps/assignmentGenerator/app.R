@@ -9,12 +9,6 @@ ui <- fluidPage(
     sidebarPanel(
       textInput('fileName', 'Enter Rmd file name', value = "Assignment.Rmd"),
       uiOutput("fileFound"),
-      checkboxInput("includeAuth", "Include Authentication Block", TRUE),
-      conditionalPanel(
-        condition = "input.includeAuth == true",
-        textInput('authFile', 'Enter CSV file name', value = "pins.csv"),
-        uiOutput("authFileFound"),
-      ),
       actionButton("newFileButton", "Create New File"),
       numericInput('points', 'Points', value = 1, min = 1),
       textInput('query', 'Question Query'),
@@ -59,21 +53,6 @@ server <- function(input, output, session) {
         tags$span("\u2718 File not found.", 
                   style = "color: red; padding-left: 5px; padding-bottom: 3px;", 
                   title = "File not found in the directory")
-      }
-    })
-  })
-  
-  observe({
-    output$authFileFound <- renderUI({
-      invalidateLater(1000)  # Checks file status every second
-      if (file.exists(paste0("./Pins/", input$authFile))) {
-        tags$span("\u2714 Pin file found!", 
-                  style = "color: green; padding-left: 5px;", 
-                  title = "Authentication CSV file has been found in the directory")
-      } else {
-        tags$span("\u2718 Pin file not found.", 
-                  style = "color: red; padding-left: 5px;", 
-                  title = "Authentication CSV file not found in the directory")
       }
     })
   })
@@ -125,7 +104,7 @@ library(purrr)
 library(googlesheets4)
 library(googledrive)
 
-source("~/CSRI-2023/Scripts/EventRecorder.R")
+source("~/CSRI-2023/Scripts/eventRecorderLocal.R")
 
 # REQUIRED: Set the global option to use our event recorder function.
 options(tutorial.event_recorder = eventRecorder)
@@ -134,30 +113,6 @@ options(tutorial.event_recorder = eventRecorder)
 knitr::opts_chunk$set(echo = FALSE)
 ```'
       cat(file=fileConn, setup_chunk, "\n")
-      
-      if(input$includeAuth) {
-        auth_file <- paste0("./Pins/", input$authFile)
-        if (file.exists(auth_file)) {
-          # Read the pin file
-          pin_df <- read.csv(auth_file)
-          # Extract the pin column
-          pin_vec <- pin_df$PIN
-          # Generate the answer lines
-          pin_answers <- paste0("answer('", pin_vec, "', correct = TRUE)", collapse = ",\n    ")
-          # Create the authentication block
-          authentication_block <- paste0(
-            "\n\n```{r auth}\n",
-            "question_text(\"[Authentication] Enter your PIN:\",\n",
-            "    ", pin_answers, ",\n",
-            "    allow_retry = TRUE)\n",
-            "```\n"
-          )
-          # Write the authentication block to the file
-          cat(file=fileConn, authentication_block, "\n")
-        } else {
-          showNotification("Authentication CSV file does not exist.", type = "warning")
-        }
-      }
       
       close(fileConn)
       showNotification("New file created!", type = "message")
@@ -250,13 +205,6 @@ knitr::opts_chunk$set(echo = FALSE)
       # Write the last question number as a comment at the end of the file
       cat(file=fileConn, paste0("<!-- Last question number: Question ", question_number, " -->"), "\n")
       
-      # Add submission block
-      submission_block <- '```{r submission}
-question("Submit Assignment?",
-       answer("Yes", correct = TRUE)
-       )
-```'
-      cat(file=fileConn, submission_block, "\n")
       close(fileConn)
       showNotification("Questions written to file!", type = "message")
     } else {
