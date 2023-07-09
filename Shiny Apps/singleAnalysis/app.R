@@ -18,16 +18,6 @@ ui <- fluidPage(
                   '.tsv'
                 )
       ),
-      fileInput('pin_file', 'Choose CSV File',
-                accept = c(
-                  'text/csv',
-                  'text/comma-separated-values',
-                  'text/tab-separated-values',
-                  'text/plain',
-                  '.csv',
-                  '.tsv'
-                )
-      ),
       actionButton("run_analysis", "Run Analysis")
     ),
     
@@ -36,11 +26,11 @@ ui <- fluidPage(
         tabPanel("Data", tableOutput("data")),
         tabPanel("Submissions by User", 
                  plotOutput("user_plot"),
-                 plotOutput("user_attempt_plot")
+                 plotOutput("user_attempts_plot") # New plot for average attempts by user
         ),
         tabPanel("Submissions by Question", 
-                 plotOutput("question_plot"), 
-                 plotOutput("question_attempt_plot")
+                 plotOutput("question_plot"),
+                 plotOutput("question_attempts_plot") # New plot for average attempts by question
         ),
         tabPanel("Grades", tableOutput("grades"))
       )
@@ -48,241 +38,98 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+
+server <- function(input, output, session) {
   
+  # Initialize reactive values
+  rv <- reactiveValues()
+  
+  # Observe the uploaded CSV file
+  observeEvent(input$homework_file, {
+    rv$data <- read_csv(input$homework_file$datapath)
+    
+    # Calculate the maximum point value for the assignment
+    rv$max_score <- rv$data %>%
+      filter(attempt_num == 1) %>% # Only include first attempts
+      group_by(question_num) %>%
+      summarize(total_points = max(points)) %>% # get max points per question
+      ungroup() %>%
+      summarize(max_score = sum(total_points)) %>% # get max possible score
+      pull(max_score)
+  })
+  
+  # Observe when the "Run Analysis" button is clicked
   observeEvent(input$run_analysis, {
-    showNotification("Done!", type = "message")
-  })
-  
-  pin_data <- reactive({
-    req(input$pin_file)
-    inFile <- input$pin_file
-    df_pin <- read.csv(inFile$datapath, stringsAsFactors = FALSE)
-    df_pin$name <- paste(df_pin$first_name, substr(df_pin$last_name, 1, 1), sep = " ")
-    return(df_pin)
-  })
-  
-  data <- reactive({
-    req(input$homework_file)
-    inFile <- input$homework_file
-    df <- read.csv(inFile$datapath, stringsAsFactors = FALSE)
-    answer_cols <- grep("_answer$", names(df), value = TRUE)
-    df[answer_cols] <- lapply(df[answer_cols], as.character)
     
-    # Join the data from the homework file and the pin file
-    df <- left_join(df, pin_data(), by = c("pin" = "PIN"))
+    # Ensure the data and max_score have been loaded
+    req(rv$data, rv$max_score)
     
-    # Drop the 'pin', 'first_name', and 'last_name' columns and keep the 'name' column
-    df <- df %>% select(-pin, -first_name, -last_name)
-    
-    # Move 'name' column to the first position
-    df <- df %>% select(name, everything())
-    
-    return(df)
-  })
-  
-  output$data <- renderTable({
-    data()
-  })
-  
-  analysis <- eventReactive(input$run_analysis, {
-    df <- data()
-    
-    # Separate columns into problems, answers, correctness and points
-    problems <- df %>%
-      select(user_id = name, starts_with("Q") & ends_with("_problem")) %>%
-      pivot_longer(-user_id, names_to = "question", values_to = "problem", names_pattern = "(Q\\d+\\.\\d+)_problem")
-    
-    answers <- df %>%
-      select(user_id = name, starts_with("Q") & ends_with("_answer")) %>%
-      pivot_longer(-user_id, names_to = "question", values_to = "answer", names_pattern = "(Q\\d+\\.\\d+)_answer")
-    
-    correctness <- df %>%
-      select(user_id = name, starts_with("Q") & ends_with("_correct")) %>%
-      pivot_longer(-user_id, names_to = "question", values_to = "correct", names_pattern = "(Q\\d+\\.\\d+)_correct")
-    
-    points <- df %>%
-      select(user_id = name, starts_with("Q") & ends_with("_points")) %>%
-      pivot_longer(-user_id, names_to = "question", values_to = "points", names_pattern = "(Q\\d+\\.\\d+)_points")
-    
-    # Combine reshaped data
-    data_long <- full_join(problems, answers, by = c("user_id", "question")) %>%
-      full_join(correctness, by = c("user_id", "question")) %>%
-      full_join(points, by = c("user_id", "question"))
-    
-    # Convert correct column to logical and points to integer
-    data_long$correct <- as.logical(data_long$correct)
-    data_long$points <- as.numeric(data_long$points)
-    
-    # Filter out first correct attempts
-    data_long <- data_long %>%
-      group_by(user_id, str_extract(question, "^Q\\d+")) %>%
-      arrange(as.numeric(str_extract(question, "\\d+$"))) %>%
-      filter(if (any(correct == TRUE)) correct == TRUE else TRUE) %>%
-      slice_min(order_by = as.numeric(str_extract(question, "\\d+$")))
-    
-    # Aggregate data by user_id and correct
-    user_data <- data_long %>%
-      group_by(user_id, correct) %>%
-      summarise(n = n(), .groups = 'drop')
-    
-    # Aggregate data by question and correct
-    question_data <- data_long %>%
-      group_by(question = str_extract(question, "^Q\\d+"), correct) %>%
-      summarise(n = n(), .groups = 'drop')
-    
-    # Calculate total points earned by each student
-    total_points_earned <- data_long %>%
-      filter(correct == TRUE) %>%
+    # Calculate each user's score on the assignment and average attempts
+    user_scores <- rv$data %>%
       group_by(user_id) %>%
-      summarise(total_earned = sum(points, na.rm = TRUE))
+      summarise(score = sum(if_else(correct == TRUE, points, 0)), # Sum up the points for correct answers
+                avg_attempts = mean(attempt_num)) %>% # Calculate the average attempts per user
+      mutate(norm_score = score / rv$max_score) %>% # Normalize the score
+      arrange(desc(norm_score)) # Arrange in descending order
     
-    # Calculate total possible points for the assignment per student and find the maximum
-    total_points_possible <- data_long %>%
-      group_by(user_id) %>%
-      summarise(total_possible = sum(points, na.rm = TRUE)) %>%
-      summarise(max_total_possible = max(total_possible, na.rm = TRUE))
+    # Calculate the average score and average attempts for each question
+    question_scores <- rv$data %>%
+      group_by(question_num) %>%
+      summarise(avg_score = mean(if_else(correct == TRUE, points, 0)), # Get the average score per question
+                avg_attempts = mean(attempt_num)) %>% # Calculate the average attempts per question
+      arrange(avg_score) # Arrange in ascending order
     
-    # Assign the maximum total_possible to each student
-    total_points_possible_per_student <- data.frame(user_id = unique(data_long$user_id), total_possible = total_points_possible$max_total_possible)
+    # Render the data table
+    output$data <- renderTable(rv$data)
     
-    # Join total_points_earned and total_points_possible_per_student
-    grading <- full_join(total_points_earned, total_points_possible_per_student, by = "user_id")
+    # Render the user scores plot
+    output$user_plot <- renderPlot({
+      ggplot(user_scores, aes(x = reorder(user_id, norm_score), y = norm_score, fill = user_id)) +
+        geom_bar(stat = "identity") +
+        ylab("Normalized Score") +
+        xlab("User ID") +
+        theme_minimal() +
+        ggtitle("Assignment Scores by User")
+    })
     
-    # Calculate percentage of points earned
-    grading <- grading %>%
-      mutate(percentage = (total_earned / total_possible) * 100)
+    # Render the user attempts plot
+    output$user_attempts_plot <- renderPlot({
+      ggplot(user_scores, aes(x = reorder(user_id, avg_attempts), y = avg_attempts, fill = user_id)) +
+        geom_bar(stat = "identity") +
+        ylab("Average Attempts") +
+        xlab("User ID") +
+        theme_minimal() +
+        ggtitle("Average Attempts by User")
+    })
     
-    grading <- grading %>%
-      mutate(letter_grade = case_when(
-        percentage >= 93 ~ "A",
-        percentage >= 90 ~ "A-",
-        percentage >= 87 ~ "B+",
-        percentage >= 83 ~ "B",
-        percentage >= 80 ~ "B-",
-        percentage >= 77 ~ "C+",
-        percentage >= 73 ~ "C",
-        percentage >= 70 ~ "C-",
-        percentage >= 67 ~ "D+",
-        percentage >= 63 ~ "D",
-        percentage >= 60 ~ "D-",
-        TRUE ~ "F"
-      ))
+    # Render the question scores plot
+    output$question_plot <- renderPlot({
+      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_score), y = avg_score, fill = as.factor(question_num))) +
+        geom_bar(stat = "identity") +
+        ylab("Average Score") +
+        xlab("Question Number") +
+        theme_minimal() +
+        ggtitle("Average Scores by Question")
+    })
     
-    # Sort by percentage, highest to lowest
-    grading <- grading %>%
-      arrange(desc(percentage))
+    # Render the question attempts plot
+    output$question_attempts_plot <- renderPlot({
+      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_attempts), y = avg_attempts, fill = as.factor(question_num))) +
+        geom_bar(stat = "identity") +
+        ylab("Average Attempts") +
+        xlab("Question Number") +
+        theme_minimal() +
+        ggtitle("Average Attempts by Question")
+    })
     
-    # Calculate the maximum attempt number for each user and question, then average by question
-    question_attempt_data <- data_long %>%
-      mutate(attempt_number = as.numeric(str_extract(question, "\\d+$"))) %>%
-      group_by(user_id, question = str_extract(question, "^Q\\d+")) %>%
-      summarise(max_attempt = max(attempt_number)) %>%
-      group_by(question) %>%
-      summarise(avg_attempts = mean(max_attempt))
-    
-    # Calculate the maximum attempt number for each user and question, then average by user
-    user_attempt_data <- data_long %>%
-      mutate(attempt_number = as.numeric(str_extract(question, "\\d+$"))) %>%
-      group_by(user_id, question = str_extract(question, "^Q\\d+")) %>%
-      summarise(max_attempt = max(attempt_number)) %>%
-      group_by(user_id) %>%
-      summarise(avg_attempts = mean(max_attempt))
-    
-    return(list(user_data = user_data, question_data = question_data, grading = grading, question_attempt_data = question_attempt_data, user_attempt_data = user_attempt_data))
-  })
-  
-  output$user_plot <- renderPlot({
-    user_data <- analysis()$user_data
-    
-    # Calculate total correct answers per user
-    correct_totals <- user_data %>% 
-      filter(correct == TRUE) %>%
-      group_by(user_id) %>%
-      summarise(total_correct = sum(n)) %>%
-      arrange(total_correct)
-    
-    # Reorder user factor levels based on total correct
-    user_data$user_id <- factor(user_data$user_id, levels = correct_totals$user_id)
-    
-    user_data <- user_data %>% 
-      arrange(user_id, desc(correct)) %>%
-      group_by(user_id) %>%
-      mutate(n_cumsum = cumsum(n))
-    
-    ggplot(user_data, aes(x = user_id, y = n, fill = correct)) +
-      geom_bar(stat = 'identity', position = 'stack') +
-      geom_text(aes(y = n_cumsum, label = n), color = "white", size = 6, vjust = 1.2) +
-      labs(x = "User ID", y = "Count", fill = "Correctness") +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  })
-  
-  output$question_plot <- renderPlot({
-    question_data <- analysis()$question_data
-    
-    # Calculate total correct answers per question
-    correct_totals <- question_data %>% 
-      filter(correct == TRUE) %>%
-      group_by(question) %>%
-      summarise(total_correct = sum(n)) %>%
-      arrange(total_correct)
-    
-    # Reorder question factor levels based on total correct
-    question_data$question <- factor(question_data$question, levels = correct_totals$question)
-    
-    question_data <- question_data %>% 
-      arrange(question, desc(correct)) %>%
-      group_by(question) %>%
-      mutate(n_cumsum = cumsum(n))
-    
-    ggplot(question_data, aes(x = as.factor(question), y = n, fill = correct)) +
-      geom_bar(stat = 'identity', position = 'stack') +
-      geom_text(aes(y = n_cumsum, label = n), color = "white", size = 6, vjust = 1.2) +
-      labs(x = "Question", y = "Count", fill = "Correctness") +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  })
-  
-  output$user_attempt_plot <- renderPlot({
-    user_attempt_data <- analysis()$user_attempt_data
-    
-    # Sort data by average attempts
-    user_attempt_data <- user_attempt_data %>%
-      arrange(avg_attempts)
-    
-    # Reorder factor levels
-    user_attempt_data$user_id <- factor(user_attempt_data$user_id, levels = user_attempt_data$user_id)
-    
-    ggplot(user_attempt_data, aes(x = user_id, y = avg_attempts)) +
-      geom_bar(stat = 'identity', fill = 'steelblue') +
-      geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
-      labs(x = "User ID", y = "Average Attempts") +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  })
-  
-  output$question_attempt_plot <- renderPlot({
-    question_attempt_data <- analysis()$question_attempt_data
-    
-    # Sort data by average attempts
-    question_attempt_data <- question_attempt_data %>%
-      arrange(avg_attempts)
-    
-    # Reorder factor levels
-    question_attempt_data$question <- factor(question_attempt_data$question, levels = question_attempt_data$question)
-    
-    ggplot(question_attempt_data, aes(x = question, y = avg_attempts)) +
-      geom_bar(stat = 'identity', fill = 'steelblue') +
-      geom_text(aes(label=round(avg_attempts, 1)), vjust=1.5, color="white", size = 6) +
-      labs(x = "Question", y = "Average Attempts") +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  })
-  
-  output$grades <- renderTable({
-    grading <- analysis()$grading
-    grading
+    # Render the grades table
+    output$grades <- renderTable({
+      user_scores %>%
+        mutate(grade = ifelse(norm_score >= 0.9, "A", 
+                              ifelse(norm_score >= 0.8, "B", 
+                                     ifelse(norm_score >= 0.7, "C", 
+                                            ifelse(norm_score >= 0.6, "D", "F")))))
+    })
   })
 }
 
