@@ -84,8 +84,9 @@ server <- function(input, output, session) {
     
     # Render the user scores plot
     output$user_plot <- renderPlot({
-      ggplot(user_scores, aes(x = reorder(user_id, norm_score), y = norm_score, fill = user_id)) +
+      ggplot(user_scores, aes(x = reorder(user_id, norm_score), y = norm_score, fill = norm_score)) +
         geom_bar(stat = "identity") +
+        scale_fill_gradient(low = "deepskyblue1", high = "blue2") +
         ylab("Normalized Score") +
         xlab("User ID") +
         theme_minimal() +
@@ -94,8 +95,9 @@ server <- function(input, output, session) {
     
     # Render the user attempts plot
     output$user_attempts_plot <- renderPlot({
-      ggplot(user_scores, aes(x = reorder(user_id, avg_attempts), y = avg_attempts, fill = user_id)) +
+      ggplot(user_scores, aes(x = reorder(user_id, avg_attempts), y = avg_attempts, fill = avg_attempts)) +
         geom_bar(stat = "identity") +
+        scale_fill_gradient(low = "deepskyblue1", high = "blue2") +
         ylab("Average Attempts") +
         xlab("User ID") +
         theme_minimal() +
@@ -104,8 +106,9 @@ server <- function(input, output, session) {
     
     # Render the question scores plot
     output$question_plot <- renderPlot({
-      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_score), y = avg_score, fill = as.factor(question_num))) +
+      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_score), y = avg_score, fill = avg_score)) +
         geom_bar(stat = "identity") +
+        scale_fill_gradient(low = "deepskyblue1", high = "blue2") +
         ylab("Average Score") +
         xlab("Question Number") +
         theme_minimal() +
@@ -114,21 +117,29 @@ server <- function(input, output, session) {
     
     # Render the question attempts plot
     output$question_attempts_plot <- renderPlot({
-      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_attempts), y = avg_attempts, fill = as.factor(question_num))) +
+      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_attempts), y = avg_attempts, fill = avg_attempts)) +
         geom_bar(stat = "identity") +
+        scale_fill_gradient(low = "deepskyblue1", high = "blue2") +
         ylab("Average Attempts") +
         xlab("Question Number") +
         theme_minimal() +
         ggtitle("Average Attempts by Question")
     })
     
-    # Render the grades table
     output$grades <- renderTable({
       user_scores %>%
-        mutate(grade = ifelse(norm_score >= 0.9, "A", 
-                              ifelse(norm_score >= 0.8, "B", 
-                                     ifelse(norm_score >= 0.7, "C", 
-                                            ifelse(norm_score >= 0.6, "D", "F")))))
+        mutate(grade = ifelse(norm_score >= 0.93, "A", 
+                              ifelse(norm_score >= 0.9, "A-", 
+                                     ifelse(norm_score >= 0.87, "B+", 
+                                            ifelse(norm_score >= 0.84, "B", 
+                                                   ifelse(norm_score >= 0.8, "B-",
+                                                          ifelse(norm_score >= 0.77, "C+",
+                                                                 ifelse(norm_score >= 0.74, "C",
+                                                                        ifelse(norm_score >= 0.7, "C-",
+                                                                               ifelse(norm_score >= 0.67, "D+",
+                                                                                      ifelse(norm_score >= 0.64, "D",
+                                                                                             ifelse(norm_score >= 0.6, "D-", "F"))))))))))))
+    
     })
   })
 }
