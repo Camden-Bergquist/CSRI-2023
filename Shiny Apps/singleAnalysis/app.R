@@ -1,8 +1,16 @@
+## Shiny app that performs analysis on a single assignment CSV.
+
 library(shiny)
 library(tidyverse)
 library(knitr)
 library(forcats)
 
+
+# UI with four tabs:
+## Data, to load in the assignment CSV and render the raw data.
+## Submissions by user graphs.
+## Submissions by question graphs.
+## Grades.
 ui <- fluidPage(
   titlePanel("Homework Data Analysis"),
   
@@ -26,11 +34,11 @@ ui <- fluidPage(
         tabPanel("Data", tableOutput("data")),
         tabPanel("Submissions by User", 
                  plotOutput("user_plot"),
-                 plotOutput("user_attempts_plot") # New plot for average attempts by user
+                 plotOutput("user_attempts_plot")
         ),
         tabPanel("Submissions by Question", 
-                 div(style = "padding:25px;", plotOutput("question_plot")),
-                 div(style = "padding:25px;", plotOutput("question_attempts_plot")) 
+                 div(style = "padding:15px;", plotOutput("question_plot")),
+                 div(style = "padding:15px;", plotOutput("question_attempts_plot")) 
         ),
         tabPanel("Grades", tableOutput("grades"))
       )
@@ -48,13 +56,15 @@ server <- function(input, output, session) {
   observeEvent(input$homework_file, {
     rv$data <- read_csv(input$homework_file$datapath)
     
-    # Calculate the maximum point value for the assignment
+    # Calculate the maximum point value for the assignment. This is done by adding up the point
+    # values for each first attempt of a question. We focus only on the first attempt to account
+    # for point-degradation functionality.
     rv$max_score <- rv$data %>%
-      filter(attempt_num == 1) %>% # Only include first attempts
+      filter(attempt_num == 1) %>% # Only include first attempts.
       group_by(question_num) %>%
-      summarize(total_points = max(points)) %>% # get max points per question
+      summarize(total_points = max(points)) %>% # Get max points per question.
       ungroup() %>%
-      summarize(max_score = sum(total_points)) %>% # get max possible score
+      summarize(max_score = sum(total_points)) %>% # Get max possible score.
       pull(max_score)
   })
   
@@ -67,19 +77,19 @@ server <- function(input, output, session) {
     # Calculate each user's score on the assignment and average attempts
     user_scores <- rv$data %>%
       group_by(user_id) %>%
-      summarise(score = sum(if_else(correct == TRUE, points, 0)), # Sum up the points for correct answers
-                avg_attempts = mean(attempt_num)) %>% # Calculate the average attempts per user
-      mutate(norm_score = score / rv$max_score) %>% # Normalize the score
-      arrange(desc(norm_score)) # Arrange in descending order
+      summarise(score = sum(if_else(correct == TRUE, points, 0)), # Sum up the points for correct answers.
+                avg_attempts = mean(attempt_num)) %>% # Calculate the average attempts per user.
+      mutate(norm_score = score / rv$max_score) %>% # Normalize the score.
+      arrange(desc(norm_score)) # Arrange in descending order.
     
-    # Calculate the average score, max score and average attempts for each question
+    # Calculate the average score, max score and average attempts for each question.
     question_scores <- rv$data %>%
       group_by(question_num) %>%
-      summarise(avg_score = mean(if_else(correct == TRUE, points, 0)), # Get the average score per question
-                avg_attempts = mean(attempt_num), # Calculate the average attempts per question
-                max_question_score = max(points[attempt_num == 1])) %>% # get max points per question from first attempts only
-      mutate(norm_avg_score = avg_score / max_question_score) %>% # Normalize the avg_score
-      arrange(norm_avg_score) # Arrange in ascending order
+      summarise(avg_score = mean(if_else(correct == TRUE, points, 0)), # Get the average score per question.
+                avg_attempts = mean(attempt_num), # Calculate the average attempts per question.
+                max_question_score = max(points[attempt_num == 1])) %>% # Get max points per question from first attempts only.
+      mutate(norm_avg_score = avg_score / max_question_score) %>% # Normalize the avg_score.
+      arrange(norm_avg_score) # Arrange in ascending order.
     
     # Render the data table
     output$data <- renderTable(rv$data)
@@ -140,6 +150,7 @@ server <- function(input, output, session) {
         )
     })
     
+    # (I'm sorry) Horrifyingly stacked ifelse statements to assign letter grades to point values.
     output$grades <- renderTable({
       user_scores %>%
         mutate(grade = ifelse(norm_score >= 0.93, "A", 

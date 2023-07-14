@@ -1,3 +1,8 @@
+## This function is analogous to that of eventRecorderLocal in overarching function but:
+
+### Is semi-legacy as it was written to output CSV files in a different format.
+### Was designed to write to Google Sheets instead of a local CSV file.
+
 # Initialize an empty data frame to record event information.
 df <- data.frame(
   pin = character(),
@@ -18,7 +23,8 @@ pin <- NA
 eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
   
   # This block authenticates with Google Sheets and Google Drive using a JSON token file.
-  # The authentication allows the function to interact with Google services, such as storing data in Google Sheets.
+  # The authentication allows the function to interact with Google services,
+  # such as storing data in Google Sheets.
   gs4_auth(
     path = "~/CSRI-2023/Auth/csri-database-token.json",
     scopes = c(
@@ -29,8 +35,9 @@ eventRecorder <- function(tutorial_id, tutorial_version, event, data, user_id) {
   
   drive_auth(path = "~/CSRI-2023/Auth/csri-database-token.json")
   
-  # This 'if' condition filters incoming events. The goal is to only process 'exercise_submission' and 'question_submission' events,
-  # as these contain meaningful user data. All other event types aren't useful for the current purposes and are ignored.
+  # This 'if' condition filters incoming events. The goal is to only process
+  # 'exercise_submission' and 'question_submission' events, as these contain meaningful user
+  # data. All other event types aren't useful for the current purposes and are ignored.
   if (event %in% c("exercise_submission", "question_submission")) {
 
     # For each non-submission question, data is extracted and stored.
