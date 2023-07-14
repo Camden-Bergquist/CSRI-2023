@@ -4,6 +4,10 @@
 
 This repository contains an event recording script and a selection of Shiny applications that turn `learnr` tutorials into jerry-rigged homework problems capable of recording user submissions, assigning weighted point values to questions, and more. The data is collected in a format that allows for automatic grade calculation and more complex data analysis. It's important to acknowledge that this is mostly a shell tossed together in 8 weeks, and, while it's pretty much ready for deployment (save for the question of user-authentication — more on that later), there's a lot of room for polish and added functionalities.
 
+Ideally, the apps can be used to create a workflow that looks something like this:
+
+![Github Flowchart](https://github.com/Camden-Bergquist/CSRI-2023/assets/94700903/1553068f-0485-42fb-825b-8f3b2f741387)
+
 ## Contents:
 
 ### Event Recording:
