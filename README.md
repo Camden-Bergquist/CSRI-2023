@@ -1,4 +1,4 @@
-# CSRI 2023 Project — R-based assignment software (name undecided).
+# CSRI 2023 Project — R-Based Assignment Software (Name Undecided).
 
 ## Overview:
 
