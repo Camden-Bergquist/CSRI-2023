@@ -6,7 +6,7 @@ This repository contains an event recording script and a selection of Shiny appl
 
 Ideally, the apps can be used to create a workflow that looks something like this:
 
-![Github Flowchart](https://github.com/Camden-Bergquist/CSRI-2023/assets/94700903/1553068f-0485-42fb-825b-8f3b2f741387)
+![Github Flowchart (1)](https://github.com/Camden-Bergquist/CSRI-2023/assets/94700903/a7a38286-b5d2-4d9b-b9cd-7ae6d52c2933)
 
 ## Contents:
 
