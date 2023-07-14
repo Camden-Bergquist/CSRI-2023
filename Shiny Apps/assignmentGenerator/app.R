@@ -30,7 +30,7 @@ ui <- fluidPage(
         numericInput('tolerance', 'Tolerance', value = 0.1)
       ),
       actionButton("addQuestion", "Add Question"),
-      actionButton("writeToFile", "Write Questions to File")
+      actionButton("writeToFile", "Write to File")
     ),
     mainPanel(
       DTOutput('table'),

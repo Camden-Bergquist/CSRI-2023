@@ -29,8 +29,8 @@ ui <- fluidPage(
                  plotOutput("user_attempts_plot") # New plot for average attempts by user
         ),
         tabPanel("Submissions by Question", 
-                 plotOutput("question_plot"),
-                 plotOutput("question_attempts_plot") # New plot for average attempts by question
+                 div(style = "padding:25px;", plotOutput("question_plot")),
+                 div(style = "padding:25px;", plotOutput("question_attempts_plot")) 
         ),
         tabPanel("Grades", tableOutput("grades"))
       )
@@ -72,12 +72,14 @@ server <- function(input, output, session) {
       mutate(norm_score = score / rv$max_score) %>% # Normalize the score
       arrange(desc(norm_score)) # Arrange in descending order
     
-    # Calculate the average score and average attempts for each question
+    # Calculate the average score, max score and average attempts for each question
     question_scores <- rv$data %>%
       group_by(question_num) %>%
       summarise(avg_score = mean(if_else(correct == TRUE, points, 0)), # Get the average score per question
-                avg_attempts = mean(attempt_num)) %>% # Calculate the average attempts per question
-      arrange(avg_score) # Arrange in ascending order
+                avg_attempts = mean(attempt_num), # Calculate the average attempts per question
+                max_question_score = max(points[attempt_num == 1])) %>% # get max points per question from first attempts only
+      mutate(norm_avg_score = avg_score / max_question_score) %>% # Normalize the avg_score
+      arrange(norm_avg_score) # Arrange in ascending order
     
     # Render the data table
     output$data <- renderTable(rv$data)
@@ -86,7 +88,7 @@ server <- function(input, output, session) {
     output$user_plot <- renderPlot({
       ggplot(user_scores, aes(x = reorder(user_id, norm_score), y = norm_score, fill = norm_score)) +
         geom_bar(stat = "identity") +
-        scale_fill_gradient(low = "deepskyblue1", high = "blue2") +
+        scale_fill_gradient(low = "deepskyblue1", high = "blue") +
         ylab("Normalized Score") +
         xlab("User ID") +
         theme_minimal() +
@@ -104,15 +106,21 @@ server <- function(input, output, session) {
         ggtitle("Average Attempts by User")
     })
     
-    # Render the question scores plot
+    # Render the normalized question scores plot
     output$question_plot <- renderPlot({
-      ggplot(question_scores, aes(x = reorder(as.factor(question_num), avg_score), y = avg_score, fill = avg_score)) +
+      ggplot(question_scores, aes(x = reorder(as.factor(question_num), norm_avg_score), y = norm_avg_score, fill = norm_avg_score)) +
         geom_bar(stat = "identity") +
         scale_fill_gradient(low = "deepskyblue1", high = "blue2") +
-        ylab("Average Score") +
+        ylab("Normalized Average Score") +
         xlab("Question Number") +
         theme_minimal() +
-        ggtitle("Average Scores by Question")
+        ggtitle("Normalized Average Scores by Question") +
+        theme(
+          plot.title = element_text(size = 16),
+          axis.title.x = element_text(size = 16),
+          axis.title.y = element_text(size = 16),
+          axis.text = element_text(size = 16)
+        )
     })
     
     # Render the question attempts plot
@@ -123,7 +131,13 @@ server <- function(input, output, session) {
         ylab("Average Attempts") +
         xlab("Question Number") +
         theme_minimal() +
-        ggtitle("Average Attempts by Question")
+        ggtitle("Average Attempts by Question") +
+        theme(
+          plot.title = element_text(size = 16),
+          axis.title.x = element_text(size = 16),
+          axis.title.y = element_text(size = 16),
+          axis.text = element_text(size = 16)
+        )
     })
     
     output$grades <- renderTable({
@@ -139,7 +153,7 @@ server <- function(input, output, session) {
                                                                                ifelse(norm_score >= 0.67, "D+",
                                                                                       ifelse(norm_score >= 0.64, "D",
                                                                                              ifelse(norm_score >= 0.6, "D-", "F"))))))))))))
-    
+      
     })
   })
 }
